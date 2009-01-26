@@ -1,0 +1,184 @@
+require File.join(File.dirname(__FILE__), 'test_helper.rb')
+
+class Foo < Exegesis::Document; end
+class Bar < Exegesis::Document; end
+
+class Caster < Exegesis::Document
+  cast 'castee', 'Foo'
+  cast 'castees', 'Foo'
+  cast 'time', 'Time'
+end
+class WithDefault < Exegesis::Document
+  default :foo => 'bar'
+end
+class Exposer < Exegesis::Document
+  expose :foo, :bar
+  show :baz
+end
+class Timestamper < Exegesis::Document
+  timestamps!
+end
+class UniqueSnowflake < Exegesis::Document
+  unique_id :set_id
+  def set_id
+    @unique_id_attempt.zero? ? "snowflake" : "snowflake-#{@unique_id_attempt}"
+  end
+end
+
+
+class ExegesisDocumentTest < Test::Unit::TestCase
+  
+  def stub_db(obj)
+    db = stub(Object.new).save(is_a(Hash), false) { obj }
+    stub(obj).database { db }
+  end
+  
+  context "a bare Exegesis::Document" do
+    before do
+      @obj = Foo.new
+      stub_db(@obj)
+      @obj.save
+    end
+    
+    expect { @obj['.kind'].will == "Foo" }
+    expect { @obj['foo'].will == nil }
+    expect { @obj.will_not respond_to(:foo) }
+    expect { @obj['created_at'].will == nil }
+    expect { @obj['updated_at'].will == nil }
+  end
+  
+  context "instantiating" do
+    expect { Exegesis::Document.instantiate({'.kind' => 'Foo'}).will be_kind_of(Foo) }
+
+    context "transitions" do
+      before do
+        @foo = Foo.new
+        @foo['.kind'] = 'Bar'
+        @bar = Exegesis::Document.instantiate(@foo)
+      end
+      
+      expect { @bar.will be_kind_of(Bar) }
+    end
+  end
+  
+  context "casting keys into classes" do
+    before do
+      @caster = Caster.new({
+        'castee' => {'foo' => 'bar'},
+        'castees' => [{'foo' => 'bar'}, {'foo' => 'baz'}],
+        'time' => Time.now.to_json
+      })
+    end
+    
+    expect { @caster['castee'].will be_kind_of(Foo) }
+    expect { @caster['castee']['foo'].will == 'bar' }
+
+    expect { @caster['time'].will be_kind_of(Time) }
+
+    expect { @caster['castees'].will be_kind_of(Array) }
+    expect { @caster['castees'].first.will be_kind_of(Foo) }
+    expect { @caster['castees'].first['foo'].will == 'bar' }
+    expect { @caster['castees'].last.will be_kind_of(Foo) }
+    expect { @caster['castees'].last['foo'].will == 'baz' }
+  end
+  
+  context "default objects" do
+    expect { WithDefault.new['foo'].will == 'bar' }
+    expect { WithDefault.new({'foo' => 'baz'})['foo'].will == 'baz' }
+  end
+  
+  context "exposing keys as methods" do
+    before do
+      @obj = Exposer.new(:foo => 'bar', :bar => 'foo', :baz => 'bee')
+    end
+    
+    expect { @obj.will respond_to(:foo) }
+    expect { @obj.foo.will == 'bar' }
+    expect { @obj.will respond_to(:bar) }
+    expect { @obj.bar.will == 'foo' }
+    expect { @obj.will respond_to(:baz) }
+    expect { @obj.baz.will == 'bee' }
+    
+    expect { @obj.will respond_to(:foo=) }
+    expect { @obj.will respond_to(:bar=) }
+    expect { @obj.wont respond_to(:baz=) }
+    
+    describe "writing methods" do
+      before do
+        @obj.foo = "foo"
+      end
+      
+      expect { @obj.foo.will == "foo" }
+    end
+  end
+  
+  context "with timestamps" do
+    before do
+      @obj = Timestamper.new
+      stub_db(@obj)
+      stub(Time).now { Time.utc(2009,1,15) }
+      @obj.save
+    end
+    
+    context "initial save" do
+      expect { @obj['created_at'].will == Time.now }
+      expect { @obj['updated_at'].will == Time.now }
+    end
+    
+    context "when created_at already exists" do
+      before do
+        @obj['created_at'] = Time.now
+        stub(Time).now { Time.utc(2009,1,16) }
+        @obj.save
+      end
+      
+      expect { @obj['created_at'].will == Time.utc(2009,1,15) }
+      expect { @obj['updated_at'].will == Time.utc(2009,1,16) }
+    end
+    
+  end
+  
+  context "with a custom unique_id setter" do
+    before do
+      @obj = UniqueSnowflake.new
+    end
+    
+    context "when the id isn't in use yet" do
+      before do
+        stub_db(@obj)
+        @obj.save
+      end
+      
+      expect { @obj.id.will == "snowflake" }
+    end
+    
+    context "when there is an id in place already" do
+      before do
+        @obj['_id'] = 'foo'
+        stub_db(@obj)
+        @obj.save
+      end
+      
+      expect { @obj.id.will == "foo" }
+    end
+    
+    context "when the desired id is already in use" do
+      before do
+        stub_db(@obj)
+        @e = RestClient::RequestFailed.new(stub(Object.new).code {"412"})
+        mock(@obj.database).save(is_a(Hash), false) { raise @e }
+        @obj.save
+      end
+      
+      expect { @obj.id.will == 'snowflake-1' }
+    end
+  end
+  
+  context "interacting with rails/merb assumptions" do
+    context "to_param for routes" do
+      before { @doc = Foo.new({'_id' => 'foo'})}
+      expect { @doc.to_param.will == "foo" }
+    end
+  end
+  
+end
