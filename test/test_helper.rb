@@ -14,4 +14,8 @@ require 'lib/exegesis'
 
 class Test::Unit::TestCase
   include RR::Adapters::TestUnit
+  
+  def fixtures_path fixtures
+    File.join(File.dirname(__FILE__), 'fixtures', fixtures)
+  end
 end

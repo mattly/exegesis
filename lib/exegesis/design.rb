@@ -1,5 +1,10 @@
+$:.unshift File.dirname(__FILE__)
+require 'design/composition'
+
 module Exegesis
   class Design
+    
+    include Exegesis::Design::Composition
     
     attr_accessor :database
     
@@ -7,8 +12,12 @@ module Exegesis
       @database = db
     end
     
+    def self.design_doc
+      ActiveSupport::Inflector.pluralize(name.to_s.sub(/(Design)$/,'').downcase)
+    end
+    
     def design_doc
-      ActiveSupport::Inflector.pluralize(self.class.name.to_s.sub(/(Design)$/,'').downcase)
+      self.class.design_doc
     end
     
     def get(id)
