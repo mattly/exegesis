@@ -4,9 +4,11 @@ class Foo < Exegesis::Document; end
 class Bar < Exegesis::Document; end
 
 class Caster < Exegesis::Document
-  cast 'castee', 'Foo'
-  cast 'castees', 'Foo'
-  cast 'time', 'Time'
+  cast 'castee'
+  cast 'castees'
+  cast 'time', :as => 'Time'
+  cast 'regex', :as => 'Regexp'
+  cast 'regexen', :as => 'Regexp'
 end
 class WithDefault < Exegesis::Document
   default :foo => 'bar'
@@ -64,22 +66,33 @@ class ExegesisDocumentTest < Test::Unit::TestCase
   context "casting keys into classes" do
     before do
       @caster = Caster.new({
-        'castee' => {'foo' => 'bar'},
-        'castees' => [{'foo' => 'bar'}, {'foo' => 'baz'}],
-        'time' => Time.now.to_json
+        'castee' => {'foo' => 'bar', '.kind' => 'Foo'},
+        'castees' => [{'foo' => 'bar', '.kind' => 'Foo'}, {'foo' => 'baz', '.kind' => 'Bar'}],
+        'time' => Time.now.to_json,
+        'regex' => 'foo', 
+        'regexen' => ['foo', 'bar']
       })
     end
     
     expect { @caster['castee'].will be_kind_of(Foo) }
     expect { @caster['castee']['foo'].will == 'bar' }
+    
+    expect { @caster['regex'].will be_kind_of(Regexp) }
+    expect { @caster['regex'].will == /foo/ }
 
     expect { @caster['time'].will be_kind_of(Time) }
 
     expect { @caster['castees'].will be_kind_of(Array) }
     expect { @caster['castees'].first.will be_kind_of(Foo) }
     expect { @caster['castees'].first['foo'].will == 'bar' }
-    expect { @caster['castees'].last.will be_kind_of(Foo) }
+    expect { @caster['castees'].last.will be_kind_of(Bar) }
     expect { @caster['castees'].last['foo'].will == 'baz' }
+    
+    expect { @caster['regexen'].will be_kind_of(Array) }
+    expect { @caster['regexen'].first.will be_kind_of(Regexp) }
+    expect { @caster['regexen'].last.will be_kind_of(Regexp) }
+    expect { @caster['regexen'].first.will == /foo/ }
+    expect { @caster['regexen'].last.will == /bar/ }
   end
   
   context "default objects" do

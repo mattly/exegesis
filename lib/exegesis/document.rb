@@ -5,10 +5,11 @@ module Exegesis
       ActiveSupport::Inflector.constantize(hash['.kind'] || 'Exegesis::Document').new(hash)
     end
     
-    def self.cast field, as, with=:new
+    def self.cast field, opts={}
       casts
-      with = :parse if as == 'Time'
-      @casts[field.to_s] = {:as => as, :with => with}
+      opts[:with] = :parse if opts[:as] == 'Time'
+      opts[:with] ||= :new
+      @casts[field.to_s] = opts
     end
     
     def self.casts
@@ -90,13 +91,16 @@ module Exegesis
       return unless self.class.casts
       self.class.casts.each do |key, pattern|
         next unless self[key]
-        klass = ActiveSupport::Inflector.constantize(pattern[:as])
         self[key] = if self[key].is_a?(Array)
-          self[key].map {|val| klass.send(pattern[:with], val) }
+          self[key].map {|val| class_for(pattern[:as], val['.kind']).send(pattern[:with], val) }
         else
-          klass.send pattern[:with], self[key]
+          class_for(pattern[:as], self[key]['.kind']).send pattern[:with], self[key]
         end
       end
+    end
+    
+    def class_for(as, kind)
+      ActiveSupport::Inflector.constantize(as || kind || 'Exegesis::Document')
     end
     
   end
