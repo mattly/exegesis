@@ -1,0 +1,26 @@
+= exegesis
+
+* http://github.com/mattly/exegesis
+
+== DESCRIPTION:
+
+An ODM (Object/Document Mapper) for Couchdb. Still very much a work in progress
+
+== FEATURES/PROBLEMS:
+
+* Encourages Per-"Account" databases. This is both a feature and a problem, since classes cannot know which database to pull from you cannot do f.e. "Article.find('foo')" as Article doesn't know what database to use.
+* Does not yet provide it's own validators; hooks to use either ActiveRecord::Validations or the Validatable gem are planned.
+* Does not yet provide it's own callbacks; hooks to load either ActiveSupport::Callbacks or Extlib's callbacks are planned.
+
+== REQUIREMENTS:
+
+* Johnson (and Spidermonkey, if you have CouchDB you have Spidermonkey)
+* ActiveSupport (for now, and only the inflector is loaded)
+
+For running the tests:
+
+* Test::Unit (you got it)
+* Context (http://github.com/jeremymcanally/context)
+* Matchy (http://github.com/jeremymcanally/matchy)
+* Zebra (http://github.com/giraffesoft/zerba)
+* RR (http://github.com/btakita/rr)
