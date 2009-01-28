@@ -1,10 +1,10 @@
 $:.unshift File.dirname(__FILE__)
-require 'design/composition'
+require 'design/syncronization'
 
 module Exegesis
   class Design
     
-    include Exegesis::Design::Composition
+    include Exegesis::Design::Syncronization
     
     attr_accessor :database
     

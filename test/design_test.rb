@@ -96,15 +96,4 @@ class ExegesisDesignTest < Test::Unit::TestCase
     end
   end
   
-  context "managing design docs" do
-    context "retrieving design docs from server" do
-      
-    end
-    
-    
-    context "syncronising with server" do
-      
-    end
-  end
-  
 end
