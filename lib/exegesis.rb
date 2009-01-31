@@ -10,17 +10,13 @@ require 'exegesis/design'
 
 module Exegesis
   
-  def self.set_designs_directory dir
-    @designs_directory = Pathname.new(dir)
-  end
-  
   def self.designs_directory= dir
     @designs_directory = Pathname.new(dir)
   end
   
   def self.designs_directory
     @designs_directory ||= Pathname.new(ENV["PWD"])
-    @designs_directory.to_s
+    @designs_directory
   end
   
   def self.design_file name

@@ -4,7 +4,7 @@ class ExegesisTest < Test::Unit::TestCase
   
   context "designs directory" do
     context "defaults" do
-      expect { Exegesis.designs_directory.will == ENV["PWD"] }
+      expect { Exegesis.designs_directory.to_s.will == ENV["PWD"] }
     end
     
     context "setting custom" do
