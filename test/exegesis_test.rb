@@ -3,17 +3,13 @@ require File.join(File.dirname(__FILE__), 'test_helper.rb')
 class ExegesisTest < Test::Unit::TestCase
   
   context "designs directory" do
-    context "defaults" do
-      expect { Exegesis.designs_directory.to_s.will == ENV["PWD"] }
-    end
-    
     context "setting custom" do
       before do
         @custom_design_dir = File.join(File.dirname(__FILE__), 'fixtures', 'designs')
         Exegesis.designs_directory = @custom_design_dir
       end
       
-      expect { Exegesis.designs_directory.will == @custom_design_dir }
+      expect { Exegesis.designs_directory.to_s.will == @custom_design_dir }
     end
     
     
