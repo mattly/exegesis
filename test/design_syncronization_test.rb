@@ -22,7 +22,7 @@ class ExegesisDesignSyncronizationTest < Test::Unit::TestCase
   
   context "composing design docs from local sources" do
     before do
-      Exegesis.set_designs_directory(fixtures_path('designs'))
+      Exegesis.designs_directory = fixtures_path('designs')
       @design = Foos.compose_design
       @file = File.read(fixtures_path('designs/foos.js'))
       @jsdoc = Johnson.evaluate("v=#{@file}")

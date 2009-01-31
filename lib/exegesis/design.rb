@@ -27,7 +27,7 @@ module Exegesis
     def docs(view, opts={})
       if opts.kind_of?(Hash) && opts.has_key?(:starts_with)
         base = opts.delete(:starts_with)
-        opts.update({:key => base.."#{base}\u9999"})
+        opts.update({:key => base.."#{base}ZZZZZ"})
       elsif ! opts.kind_of?(Hash) || ([:key, :keys, :startkey, :endkey] & opts.keys).empty?
         opts = {:key => opts}
       end
@@ -37,7 +37,7 @@ module Exegesis
         opts.update({:startkey => range.first, :endkey => range.last})
       end
       
-      response = database.view view, opts.update({:include_docs => true})
+      response = database.view "#{design_doc}/#{view}", opts.update({:include_docs => true})
       response['rows'].map {|doc| Exegesis::Document.instantiate doc['doc'] }
     end
   end
