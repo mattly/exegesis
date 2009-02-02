@@ -20,7 +20,7 @@ class Test::Unit::TestCase
   end
   
   # todo: extract to some helper methods to include ala RR, etc
-  def reset_db(name)
+  def reset_db(name=nil)
     @db = CouchRest.database db(name) rescue nil
     @db.delete! rescue nil
     @db = CouchRest.database! db(name)
@@ -31,7 +31,7 @@ class Test::Unit::TestCase
   end
   
   def db(name)
-    "http://localhost:5984/exegesis-test-#{name}"
+    "http://localhost:5984/exegesis-test#{name.nil? ? '' : "-#{name}"}"
   end
   
   # def with_couch(%blk)

@@ -30,15 +30,11 @@ end
 
 class ExegesisDocumentTest < Test::Unit::TestCase
   
-  def stub_db(obj)
-    db = stub(Object.new).save(is_a(Hash), false) { obj }
-    stub(obj).database { db }
-  end
-  
   context "a bare Exegesis::Document" do
     before do
+      reset_db
       @obj = Foo.new
-      stub_db(@obj)
+      @obj.database = @db
       @obj.save
     end
     
@@ -127,10 +123,12 @@ class ExegesisDocumentTest < Test::Unit::TestCase
   
   context "with timestamps" do
     before do
+      reset_db
       @obj = Timestamper.new
-      stub_db(@obj)
+      @obj.database = @db
       stub(Time).now { Time.utc(2009,1,15) }
       @obj.save
+      @obj = Timestamper.new(@db.get(@obj.id))
     end
     
     context "initial save" do
@@ -140,9 +138,11 @@ class ExegesisDocumentTest < Test::Unit::TestCase
     
     context "when created_at already exists" do
       before do
+        @obj.database = @db
         @obj['created_at'] = Time.now
         stub(Time).now { Time.utc(2009,1,16) }
         @obj.save
+        @obj = Timestamper.new(@db.get(@obj.id))
       end
       
       expect { @obj['created_at'].will == Time.utc(2009,1,15) }
@@ -153,12 +153,13 @@ class ExegesisDocumentTest < Test::Unit::TestCase
   
   context "with a custom unique_id setter" do
     before do
+      reset_db
       @obj = UniqueSnowflake.new
+      @obj.database = @db
     end
     
     context "when the id isn't in use yet" do
       before do
-        stub_db(@obj)
         @obj.save
       end
       
@@ -168,7 +169,6 @@ class ExegesisDocumentTest < Test::Unit::TestCase
     context "when there is an id in place already" do
       before do
         @obj['_id'] = 'foo'
-        stub_db(@obj)
         @obj.save
       end
       
@@ -177,9 +177,7 @@ class ExegesisDocumentTest < Test::Unit::TestCase
     
     context "when the desired id is already in use" do
       before do
-        stub_db(@obj)
-        @e = RestClient::RequestFailed.new(stub(Object.new).code {"412"})
-        mock(@obj.database).save(is_a(Hash), false) { raise @e }
+        @db.save({'_id' => 'snowflake', 'foo' => 'bar'})
         @obj.save
       end
       

@@ -42,6 +42,8 @@ module Exegesis
         self['updated_at'] = Time.now
         self['created_at'] ||= Time.now
       end
+      cast 'updated_at', :as => 'Time'
+      cast 'created_at', :as => 'Time'
     end
     
     def self.unique_id meth
