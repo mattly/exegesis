@@ -74,7 +74,7 @@ class ExegesisDesignTest < Test::Unit::TestCase
     end
     
     context "for the view's data" do
-      before { @response = @doc.data_for :test }
+      before { @response = @doc.values_for :test }
       
       expect { @response.will == %w(bar baz foo) }
     end

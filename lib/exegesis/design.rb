@@ -52,7 +52,7 @@ module Exegesis
       response['rows'].map {|doc| Exegesis::Document.instantiate doc['doc'] }
     end
     
-    def data_for view_name, opts={}
+    def values_for view_name, opts={}
       response = view view_name, opts
       response['rows'].map {|row| row['value'] }
     end
