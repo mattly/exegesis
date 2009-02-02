@@ -89,6 +89,10 @@ class ExegesisDocumentTest < Test::Unit::TestCase
     expect { @caster['regexen'].last.will be_kind_of(Regexp) }
     expect { @caster['regexen'].first.will == /foo/ }
     expect { @caster['regexen'].last.will == /bar/ }
+    
+    context "with bad syntax" do
+      expect { lambda{Caster.class_eval {cast :foo, 'Time'} }.will raise_error(ArgumentError) }
+    end
   end
   
   context "default objects" do

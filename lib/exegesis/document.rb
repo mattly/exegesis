@@ -6,6 +6,9 @@ module Exegesis
     end
     
     def self.cast field, opts={}
+      unless opts.kind_of?(Hash) 
+        raise ArgumentError
+      end
       casts
       opts[:with] = :parse if opts[:as] == 'Time'
       opts[:with] ||= :new
