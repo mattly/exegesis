@@ -4,6 +4,19 @@ require 'design/syncronization'
 module Exegesis
   class Design
     
+    def self.designs_directory= dir
+      @designs_directory = Pathname.new(dir)
+    end
+
+    def self.designs_directory
+      @designs_directory ||= Pathname.new(ENV["PWD"])
+      @designs_directory
+    end
+
+    def self.design_file name
+      File.read(designs_directory + name)
+    end
+    
     include Exegesis::Design::Syncronization
     
     attr_accessor :database
@@ -21,7 +34,9 @@ module Exegesis
     end
     
     def get(id)
-      Exegesis::Document.instantiate database.get(id)
+      doc = Exegesis::Document.instantiate database.get(id)
+      doc.database = self.database
+      doc
     end
     
     def parse_opts(opts={})

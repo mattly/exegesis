@@ -92,4 +92,15 @@ class ExegesisDesignTest < Test::Unit::TestCase
     end
   end
   
+  context "designs directory" do
+    context "setting custom" do
+      before do
+        @custom_design_dir = File.join(File.dirname(__FILE__), 'fixtures')
+        FooDesign.designs_directory = @custom_design_dir
+      end
+      
+      expect { FooDesign.designs_directory.to_s.will == @custom_design_dir }
+    end
+  end
+  
 end
