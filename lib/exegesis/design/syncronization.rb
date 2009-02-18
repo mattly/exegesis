@@ -10,15 +10,12 @@ module Exegesis
       end
       
       module ClassMethods
-        def compose_design
-        end
-        
-        def designs_directory= dir
-          @designs_directory = Pathname.new(dir)
-        end
-
-        def designs_directory
-          @designs_directory || Exegesis.designs_directory
+        def designs_directory dir=nil
+          if dir
+            @designs_directory = Pathname.new(dir)
+          else
+            @designs_directory || Exegesis.designs_directory
+          end
         end
         
         def design_doc_path

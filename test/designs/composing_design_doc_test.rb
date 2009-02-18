@@ -1,6 +1,9 @@
 require File.join(File.dirname(__FILE__), '..', 'test_helper.rb')
 
 class FooDesign < Exegesis::Design; end
+class CustomDesignDirDesign < Exegesis::Design
+  designs_directory File.join(File.dirname(__FILE__), 'fixtures')
+end
 
 class ComposingDesignDocTest < Test::Unit::TestCase
   before do
@@ -10,10 +13,10 @@ class ComposingDesignDocTest < Test::Unit::TestCase
   context "setting a custom designs directory" do
     before do
       @custom_design_dir = File.join(File.dirname(__FILE__), 'fixtures')
-      FooDesign.designs_directory = @custom_design_dir
     end
     
-    expect { FooDesign.designs_directory.to_s.will == @custom_design_dir }
+    expect { CustomDesignDirDesign.designs_directory.to_s.will == @custom_design_dir }
+    
   end
   
   context "composing design docs from local sources" do
