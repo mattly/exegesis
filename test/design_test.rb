@@ -20,7 +20,7 @@ class ExegesisDesignTest < Test::Unit::TestCase
     before do
       reset_db('design-views')
       @doc = Foos.new(@db)
-      @db.save '_id' => 'foo', 'foo' => 'bar', '.kind' => 'TestForDesign'
+      @db.save_doc '_id' => 'foo', 'foo' => 'bar', '.kind' => 'TestForDesign'
       @obj = @doc.get('foo')
     end
     
@@ -38,7 +38,7 @@ class ExegesisDesignTest < Test::Unit::TestCase
         {'_id' => 'baz', 'foo' => 'baz', 'bar' => 'baz', '.kind' => 'TestForDesign'}
       ]
       @db.bulk_save @raw_docs
-      @db.save({
+      @db.save_doc({
         '_id' => '_design/foos',
         'views' => {
           'test' => { 'map'=>'function(doc) {emit(doc.foo, doc.bar);}' },
