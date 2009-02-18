@@ -55,6 +55,7 @@ module Exegesis
       end
     end
     
+    alias :_rev :rev
     alias_method :document_save, :save
     
     def save
@@ -78,6 +79,15 @@ module Exegesis
       super keys
       cast_keys
       self['.kind'] ||= self.class.to_s
+    end
+    
+    def update_attributes attrs={}
+      raise ArgumentError, 'must include a matching _rev attribute' unless rev == attrs.delete('_rev')
+      attrs.each_pair do |key, value| 
+        self.send("#{key}=", value) rescue nil
+        attrs.delete(key)
+      end
+      save
     end
     
     def to_param
@@ -104,7 +114,7 @@ module Exegesis
       end
     end
     
-    def class_for(as, kind)
+    def class_for as, kind
       ActiveSupport::Inflector.constantize(as || kind || 'Exegesis::Document')
     end
     

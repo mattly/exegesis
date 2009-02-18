@@ -64,7 +64,11 @@ module Exegesis
     
     def docs_for view_name, opts={}
       response = view view_name, opts.update({:include_docs => true})
-      response['rows'].map {|doc| Exegesis::Document.instantiate doc['doc'] }
+      response['rows'].map do |doc| 
+        model = Exegesis::Document.instantiate doc['doc']
+        model.database = database
+        model
+      end
     end
     
     def values_for view_name, opts={}

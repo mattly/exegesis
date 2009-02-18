@@ -28,7 +28,7 @@ class UniqueSnowflake < Exegesis::Document
 end
 
 
-class ExegesisDocumentTest < Test::Unit::TestCase
+class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
   
   context "a bare Exegesis::Document" do
     before do
@@ -130,27 +130,26 @@ class ExegesisDocumentTest < Test::Unit::TestCase
       reset_db
       @obj = Timestamper.new
       @obj.database = @db
-      stub(Time).now { Time.utc(2009,1,15) }
+      # stub(Time).now { Time.utc(2009,1,15) }
       @obj.save
       @obj = Timestamper.new(@db.get(@obj.id))
     end
     
     context "initial save" do
-      expect { @obj['created_at'].will == Time.now }
-      expect { @obj['updated_at'].will == Time.now }
+      expect { @obj['created_at'].to_i.will == Time.now.to_i }
+      expect { @obj['updated_at'].to_i.will == Time.now.to_i }
     end
     
     context "when created_at already exists" do
       before do
         @obj.database = @db
         @obj['created_at'] = Time.now
-        stub(Time).now { Time.utc(2009,1,16) }
         @obj.save
         @obj = Timestamper.new(@db.get(@obj.id))
       end
       
-      expect { @obj['created_at'].will == Time.utc(2009,1,15) }
-      expect { @obj['updated_at'].will == Time.utc(2009,1,16) }
+      expect { @obj['created_at'].to_i.will == Time.now.to_i }
+      expect { @obj['updated_at'].to_i.will == Time.now.to_i }
     end
     
   end
@@ -181,7 +180,7 @@ class ExegesisDocumentTest < Test::Unit::TestCase
     
     context "when the desired id is already in use" do
       before do
-        @db.save({'_id' => 'snowflake', 'foo' => 'bar'})
+        @db.save_doc({'_id' => 'snowflake', 'foo' => 'bar'})
         @obj.save
       end
       

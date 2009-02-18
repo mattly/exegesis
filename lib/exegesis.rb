@@ -7,6 +7,8 @@ require 'active_support/inflector'
 $:.unshift File.dirname(__FILE__)
 require 'exegesis/document'
 require 'exegesis/design'
+require 'exegesis/model'
+require 'exegesis/model/state_machine'
 
 module Exegesis
   
