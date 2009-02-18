@@ -1,25 +1,27 @@
 require File.join(File.dirname(__FILE__), 'test_helper.rb')
 
-class Foos < Exegesis::Design; end
 class FooDesign < Exegesis::Design; end
+class BarDesign < Exegesis::Design
+  use_design_doc_name :something_else
+end
 
 class TestForDesign < CouchRest::Document; end
 
 class ExegesisDesignTest < Test::Unit::TestCase
   
   before do
-    @db = Object.new
-    @doc = Foos.new(@db)
+    reset_db
+    @doc = FooDesign.new(@db)
   end
   
   expect { @doc.database.will == @db }
-  expect { @doc.design_doc.will == "foos" }
-  expect { FooDesign.new(@db).design_doc.will == "foos" }
+  expect { @doc.design_doc_name.will == "foos" }
+
+  expect { FooDesign.design_doc_name.will == "foos" }
+  expect { BarDesign.design_doc_name.will == "something_else" }
   
   context "retrieving documents with #get" do
     before do
-      reset_db('design-views')
-      @doc = Foos.new(@db)
       @db.save_doc '_id' => 'foo', 'foo' => 'bar', '.kind' => 'TestForDesign'
       @obj = @doc.get('foo')
     end
@@ -30,8 +32,6 @@ class ExegesisDesignTest < Test::Unit::TestCase
   
   context "retreiving views" do
     before do
-      reset_db('design-views')
-      @doc = Foos.new(@db)
       @raw_docs = [
         {'_id' => 'foo', 'foo' => 'foo', 'bar' => 'foo', '.kind' => 'TestForDesign'},
         {'_id' => 'bar', 'foo' => 'bar', 'bar' => 'bar', '.kind' => 'TestForDesign'},
@@ -89,17 +89,6 @@ class ExegesisDesignTest < Test::Unit::TestCase
       before { @response = @doc.ids_for :test, :key => 'bar'..'foo'}
       
       expect { @response.will == %w(bar baz foo) }
-    end
-  end
-  
-  context "designs directory" do
-    context "setting custom" do
-      before do
-        @custom_design_dir = File.join(File.dirname(__FILE__), 'fixtures')
-        FooDesign.designs_directory = @custom_design_dir
-      end
-      
-      expect { FooDesign.designs_directory.to_s.will == @custom_design_dir }
     end
   end
   

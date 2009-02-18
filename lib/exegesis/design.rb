@@ -3,20 +3,6 @@ require 'design/syncronization'
 
 module Exegesis
   class Design
-    
-    def self.designs_directory= dir
-      @designs_directory = Pathname.new(dir)
-    end
-
-    def self.designs_directory
-      @designs_directory ||= Pathname.new(ENV["PWD"])
-      @designs_directory
-    end
-
-    def self.design_file name
-      File.read(designs_directory + name)
-    end
-    
     include Exegesis::Design::Syncronization
     
     attr_accessor :database
@@ -25,12 +11,16 @@ module Exegesis
       @database = db
     end
     
-    def self.design_doc
-      ActiveSupport::Inflector.pluralize(name.to_s.sub(/(Design)$/,'').downcase)
+    def self.use_design_doc_name name
+      @design_doc_name = name.to_s
     end
     
-    def design_doc
-      self.class.design_doc
+    def self.design_doc_name
+      @design_doc_name ||= ActiveSupport::Inflector.pluralize(name.to_s.sub(/(Design)$/,'').downcase)
+    end
+    
+    def design_doc_name
+      self.class.design_doc_name
     end
     
     def get(id)
@@ -59,12 +49,12 @@ module Exegesis
     
     def view view_name, opts={}
       opts = parse_opts opts
-      database.view "#{design_doc}/#{view_name}", opts
+      database.view("#{design_doc_name}/#{view_name}", opts)['rows']
     end
     
     def docs_for view_name, opts={}
       response = view view_name, opts.update({:include_docs => true})
-      response['rows'].map do |doc| 
+      response.map do |doc| 
         model = Exegesis::Document.instantiate doc['doc']
         model.database = database
         model
@@ -73,17 +63,17 @@ module Exegesis
     
     def values_for view_name, opts={}
       response = view view_name, opts
-      response['rows'].map {|row| row['value'] }
+      response.map {|row| row['value'] }
     end
     
     def keys_for view_name, opts={}
       response = view view_name, opts
-      response['rows'].map {|row| row['key'] }
+      response.map {|row| row['key'] }
     end
     
     def ids_for view_name, opts={}
       response = view view_name, opts
-      response['rows'].map {|row| row['id'] }
+      response.map {|row| row['id'] }
     end
     
   end
