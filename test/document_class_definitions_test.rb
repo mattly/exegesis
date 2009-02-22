@@ -6,9 +6,9 @@ class Bar < Exegesis::Document; end
 class Caster < Exegesis::Document
   cast 'castee'
   cast 'castees'
-  cast 'time', :as => 'Time'
-  cast 'regex', :as => 'Regexp'
-  cast 'regexen', :as => 'Regexp'
+  cast 'time', :as => Time
+  cast 'regex', :as => Regexp
+  cast 'regexen', :as => Regexp
 end
 class WithDefault < Exegesis::Document
   default :foo => 'bar'
@@ -91,7 +91,7 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
     expect { @caster['regexen'].last.will == /bar/ }
     
     context "with bad syntax" do
-      expect { lambda{Caster.class_eval {cast :foo, 'Time'} }.will raise_error(ArgumentError) }
+      expect { lambda{Caster.class_eval {cast :foo, Time} }.will raise_error(ArgumentError) }
     end
   end
   

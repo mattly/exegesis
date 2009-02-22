@@ -10,7 +10,7 @@ module Exegesis
         raise ArgumentError
       end
       casts
-      opts[:with] = :parse if opts[:as] == 'Time'
+      opts[:with] = :parse if ['Time', Time].include?(opts[:as])
       opts[:with] ||= :new
       @casts[field.to_s] = opts
     end
@@ -106,15 +106,29 @@ module Exegesis
       return unless self.class.casts
       self.class.casts.each do |key, pattern|
         next unless self[key]
-        self[key] = if self[key].is_a?(Array)
-          self[key].map {|val| class_for(pattern[:as], val['.kind']).send(pattern[:with], val) }
-        else
-          class_for(pattern[:as], self[key]['.kind']).send pattern[:with], self[key]
-        end
+        cast_key key, pattern[:as], pattern[:with]
       end
     end
     
+    def cast_key key, as, with
+      self[key] = if self[key].is_a?(Array)
+        self[key].map {|val| cast as, with, val }
+      else
+        cast as, with, self[key]
+      end
+    end
+    
+    def cast as, with, value
+      klass = if value.is_a?(Hash)
+        class_for as, value['.kind']
+      else
+        class_for as, nil
+      end
+      klass.send with, value
+    end
+    
     def class_for as, kind
+      return as if as.is_a?(Class)
       ActiveSupport::Inflector.constantize(as || kind || 'Exegesis::Document')
     end
     
