@@ -33,9 +33,9 @@ class ExegesisDesignTest < Test::Unit::TestCase
   context "retreiving views" do
     before do
       @raw_docs = [
-        {'_id' => 'foo', 'foo' => 'foo', 'bar' => 'foo', '.kind' => 'TestForDesign'},
         {'_id' => 'bar', 'foo' => 'bar', 'bar' => 'bar', '.kind' => 'TestForDesign'},
-        {'_id' => 'baz', 'foo' => 'baz', 'bar' => 'baz', '.kind' => 'TestForDesign'}
+        {'_id' => 'baz', 'foo' => 'baz', 'bar' => 'baz', '.kind' => 'TestForDesign'},
+        {'_id' => 'foo', 'foo' => 'foo', 'bar' => 'foo', '.kind' => 'TestForDesign'}
       ]
       @db.bulk_save @raw_docs
       @db.save_doc({
@@ -62,8 +62,26 @@ class ExegesisDesignTest < Test::Unit::TestCase
         expect { @opts[:startkey].will == ['published', '2008'] }
         expect { @opts[:endkey].will == ['published', '2008/13'] }
       end
+      
+      context "when a keys option is empty" do
+        before { @opts = @doc.parse_opts(:keys => []) }
+        
+        expect { @opts[:keys].will be(nil) }
+      end
     end
     
+    context "when no key, keys, startkey or all option is present" do
+      before { @response = @doc.view :test }
+      
+      expect { @response.will == [] }
+    end
+
+    context "with an all key" do
+      before { @response = @doc.view :test, :all => true }
+      
+      expect { @response.will == @raw_docs.map{|d| {'id' => d['_id'], 'key' => d['foo'], 'value' => d['bar']} } }
+    end
+
     context "with docs" do
       before { @response = @doc.docs_for :test, :key => 'foo' }
     
@@ -74,7 +92,7 @@ class ExegesisDesignTest < Test::Unit::TestCase
     end
     
     context "for the view's data" do
-      before { @response = @doc.values_for :test }
+      before { @response = @doc.values_for :test, :all => true }
       
       expect { @response.will == %w(bar baz foo) }
     end

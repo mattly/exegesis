@@ -42,6 +42,8 @@ module Exegesis
             opts[:endkey]   = key.map {|v| v.kind_of?(Range) ? v.last : v }
           end
         end
+      elsif opts[:keys] && opts[:keys].empty?
+        opts.delete[:keys]
       end
 
       opts
@@ -49,6 +51,8 @@ module Exegesis
     
     def view view_name, opts={}
       opts = parse_opts opts
+      return [] unless opts[:key] || opts[:startkey] || opts[:keys] || opts[:all]
+      opts.delete(:all)
       database.view("#{design_doc_name}/#{view_name}", opts)['rows']
     end
     
