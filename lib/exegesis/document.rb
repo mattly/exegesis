@@ -45,8 +45,8 @@ module Exegesis
         self['updated_at'] = Time.now
         self['created_at'] ||= Time.now
       end
-      cast 'updated_at', :as => 'Time'
-      cast 'created_at', :as => 'Time'
+      cast 'updated_at', :as => Time
+      cast 'created_at', :as => Time
     end
     
     def self.unique_id meth
@@ -111,20 +111,24 @@ module Exegesis
     end
     
     def cast_key key, as, with
+      return if self[key].nil?
       self[key] = if self[key].is_a?(Array)
-        self[key].map {|val| cast as, with, val }
+        self[key].map {|val| cast as, with, val }.compact
       else
         cast as, with, self[key]
       end
     end
     
     def cast as, with, value
+      return nil if value.nil?
       klass = if value.is_a?(Hash)
         class_for as, value['.kind']
       else
         class_for as, nil
       end
-      klass.send with, value
+      casted = klass.send with, value
+      casted.parent = self if casted.respond_to?(:parent=)
+      casted
     end
     
     def class_for as, kind
@@ -134,3 +138,7 @@ module Exegesis
     
   end
 end
+
+$:.unshift File.dirname(__FILE__)
+require 'document/annotated_reference'
+require 'document/reference'

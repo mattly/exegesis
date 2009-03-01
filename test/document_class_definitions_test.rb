@@ -72,6 +72,7 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
     
     expect { @caster['castee'].will be_kind_of(Foo) }
     expect { @caster['castee']['foo'].will == 'bar' }
+    # expect { @caster['castee'].parent.will == @caster }
     
     expect { @caster['regex'].will be_kind_of(Regexp) }
     expect { @caster['regex'].will == /foo/ }
@@ -81,8 +82,10 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
     expect { @caster['castees'].will be_kind_of(Array) }
     expect { @caster['castees'].first.will be_kind_of(Foo) }
     expect { @caster['castees'].first['foo'].will == 'bar' }
+    # expect { @caster['castees'].first.parent.will == @caster }
     expect { @caster['castees'].last.will be_kind_of(Bar) }
     expect { @caster['castees'].last['foo'].will == 'baz' }
+    # expect { @caster['castees'].last.parent.will == @caster }
     
     expect { @caster['regexen'].will be_kind_of(Array) }
     expect { @caster['regexen'].first.will be_kind_of(Regexp) }
@@ -92,6 +95,20 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
     
     context "with bad syntax" do
       expect { lambda{Caster.class_eval {cast :foo, Time} }.will raise_error(ArgumentError) }
+    end
+    
+    context "with a nil value" do
+      before do
+        @caster = Caster.new({
+          'castee' => nil,
+          'castees' => nil,
+          'regexen' => ['foo', nil]
+        })
+      end
+      
+      expect { @caster['castee'].will be(nil) }
+      expect { @caster['castees'].will be(nil) }
+      expect { @caster['regexen'].will == [/foo/] }
     end
   end
   
