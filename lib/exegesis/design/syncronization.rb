@@ -30,10 +30,30 @@ module Exegesis
             end
             memo
           end
+          composite_views = declared_views.dup.update(views)
           { '_id' => "_design/#{design_doc_name}",
             'language' => 'javascript',
-            'views' => views
+            'views' => composite_views
           }
+        end
+        
+        def declared_views
+          @declared_views ||= {}
+        end
+        
+        def view_by *keys
+          view_name = "by_#{keys.join('_and_')}"
+          doc_keys = keys.map {|k| "doc['#{k}']" }
+          declared_views[view_name] = {
+            :map => %|function(doc) {
+              if (doc['.kind'] == '#{name.sub(/Design$/,'')}' && #{doc_keys.join(' && ')}) {
+                emit(#{keys.length == 1 ? doc_keys.first : "[#{doc_keys.join(', ')}]" }, null);
+              }
+            }|
+          }
+          define_method view_name do |*args|
+            docs_for view_name, *args
+          end
         end
         
         def design_doc_hash

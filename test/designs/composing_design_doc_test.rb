@@ -1,6 +1,9 @@
 require File.join(File.dirname(__FILE__), '..', 'test_helper.rb')
 
-class FooDesign < Exegesis::Design; end
+class FooDesign < Exegesis::Design
+  view_by :foo
+  view_by :foo_and_bar
+end
 class CustomDesignDirDesign < Exegesis::Design
   designs_directory File.join(File.dirname(__FILE__), 'fixtures')
 end
@@ -28,8 +31,21 @@ class ComposingDesignDocTest < Test::Unit::TestCase
   
     expect { @design.has_key?('_id').will be(true) }
     expect { @design['_id'].will == '_design/foos' }
-    expect { @design['views']['by_bar'].has_key?('map').will be(true) }
-    expect { @design['views']['by_bar']['map'].should == @jsdoc['views']['by_bar']['map'].toString }
+    expect { @design['views']['by_bar']['map'].will == @jsdoc['views']['by_bar']['map'].toString }
+  end
+  
+  context "composing a design doc from view_by declarations" do
+    before do
+      @design = FooDesign.design_doc
+      @by_foo = @design['views']['by_foo']['map']
+      @by_foo_and_bar = @design['views']['by_foo_and_bar']['map']
+    end
+    
+    expect { @by_foo.will =~ "if (doc['.kind'] == 'Foo' && doc['foo'])" }
+    expect { @by_foo.will =~ "emit(doc.foo, null);" }
+    
+    expect { @by_foo_and_bar.will =~ "if (doc['.kind'] == 'Foo' && doc['foo'] && doc['bar'])" }
+    expect { @by_foo_and_bar.will =~ "emit([doc.foo, doc.bar], null)" }
   end
   
   context "building a hash a design doc" do
