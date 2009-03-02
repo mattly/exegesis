@@ -143,6 +143,52 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
       end
       
       context "when as reference" do
+        context "with a database present" do
+          before do
+            reset_db
+            @obj = Exposer.new(:other_doc => "other_doc", :other_docs => ["other_docs_1", "other_docs_2"])
+            @obj.database = @db
+          end
+          context "when the document exists" do
+            before do
+              @db.bulk_save([
+                {'.kind' => 'Foo', '_id' => 'other_doc'},
+                {'.kind' => 'Foo', '_id' => 'other_docs_1'}, 
+                {'.kind' => 'Foo', '_id' => 'other_docs_2'}
+              ])
+            end
+            
+            expect { @obj.other_doc.rev.will == @db.get('other_doc')['_rev'] }
+            expect { @obj.other_doc.class.will == Foo }
+            expect { @obj.other_docs.class.will == Array }
+            expect { @obj.other_docs[0].rev.will == @db.get('other_docs_1')['_rev'] }
+            expect { @obj.other_docs[0].class.will == Foo }
+            expect { @obj.other_docs[1].rev.will == @db.get('other_docs_2')['_rev'] }
+            expect { @obj.other_docs[1].class.will == Foo }
+            
+            context "caching" do
+              before do
+                @obj.other_doc
+                doc = @db.get('other_doc')
+                doc['foo'] = "updated"
+                doc.save
+              end
+              
+              expect { @obj.other_doc['foo'].will be(nil) }
+              expect { @obj.other_doc(true)['foo'].will == 'updated' }
+            end
+          end
+          
+          context "when the document is missing" do
+            expect { lambda{@obj.other_doc}.will raise_error(RestClient::ResourceNotFound) }
+            expect { lambda{@obj.other_docs}.will raise_error(RestClient::ResourceNotFound) }
+          end
+        end
+        
+        context "without a database present" do
+          before { @obj = Exposer.new(:other_doc => "some_doc_id") }
+          expect { lambda{@obj.other_doc}.will raise_error(ArgumentError) }
+        end
       end
       
       context "when the value is nil" do

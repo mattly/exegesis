@@ -26,11 +26,20 @@ module Exegesis
           define_method("#{attrib}=") {|val| self[attrib] = val }
         end
         if opts[:as]
-          define_method(attrib) do
-            self[attrib] = if self[attrib].is_a?(Array)
-              self[attrib].map {|val| cast opts[:as], val }.compact
-            else
-              cast opts[:as], self[attrib]
+          if opts[:as] == :reference
+            define_method(attrib) do |*reload|
+              reload = false if reload.empty?
+              instance_variable_set("@#{attrib}", nil) if reload
+              return instance_variable_get("@#{attrib}") if instance_variable_get("@#{attrib}")
+              instance_variable_set("@#{attrib}", load_reference(self[attrib]))
+            end
+          else
+            define_method(attrib) do
+              self[attrib] = if self[attrib].is_a?(Array)
+                self[attrib].map {|val| cast opts[:as], val }.compact
+              else
+                cast opts[:as], self[attrib]
+              end
             end
           end
         else
@@ -106,15 +115,30 @@ module Exegesis
     
     def cast as, value
       return nil if value.nil?
-      klassname = value.is_a?(Hash) ? value['.kind'] : as
-      klass = if klassname.is_a?(Class)
-        klassname
+      klass = if as == :given
+        if value.is_a?(Hash)
+          Exegesis.document_classes[value['.kind']]
+        else
+          nil #nfi what do to in this case; maybe just have it be a doc hash?
+        end
+      elsif as.is_a?(Class)
+        as
       else
-        Exegesis.document_classes[klassname]
+        Exegesis.document_classes[nil] # whatever the default is? Hell idk.
       end
+
       with = klass == Time ? :parse : :new
       casted = klass.send with, value
       casted
+    end
+    
+    def load_reference ids
+      raise ArgumentError, "a database is required for loading a reference" unless database
+      if ids.is_a?(Array)
+        ids.map {|val| Exegesis::Document.instantiate(database.get(val)) }
+      else
+        Exegesis::Document.instantiate(database.get(ids))
+      end
     end
     
   end
