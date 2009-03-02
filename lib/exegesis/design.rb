@@ -43,7 +43,7 @@ module Exegesis
           end
         end
       elsif opts[:keys] && opts[:keys].empty?
-        opts.delete[:keys]
+        opts.delete(:keys)
       end
 
       opts
