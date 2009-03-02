@@ -74,7 +74,10 @@ module Exegesis
     alias :_rev :rev
     alias_method :document_save, :save
     
+    attr_accessor :parent
+    
     def save
+      raise ChildError, "cannot save if a parent is set" if parent
       set_timestamps if respond_to?(:set_timestamps)
       if respond_to?(:set_unique_id) && id.nil?
         @unique_id_attempt = 0
@@ -129,15 +132,16 @@ module Exegesis
 
       with = klass == Time ? :parse : :new
       casted = klass.send with, value
+      casted.parent = self if casted.respond_to?(:parent)
       casted
     end
     
     def load_reference ids
-      raise ArgumentError, "a database is required for loading a reference" unless database
+      raise ArgumentError, "a database is required for loading a reference" unless database || (parent && parent.database)
       if ids.is_a?(Array)
-        ids.map {|val| Exegesis::Document.instantiate(database.get(val)) }
+        ids.map {|val| Exegesis::Document.instantiate((database || parent && parent.database).get(val)) }
       else
-        Exegesis::Document.instantiate(database.get(ids))
+        Exegesis::Document.instantiate((database || parent && parent.database).get(ids))
       end
     end
     

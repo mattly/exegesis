@@ -1,6 +1,8 @@
 require File.join(File.dirname(__FILE__), 'test_helper.rb')
 
-class Foo < Exegesis::Document; end
+class Foo < Exegesis::Document
+  expose :ref, :as => :reference
+end
 class Bar < Exegesis::Document; end
 
 class WithDefault < Exegesis::Document
@@ -104,12 +106,15 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
         
         expect { @obj.castee.class.will == Foo }
         expect { @obj.castee['foo'].will == 'foo' }
+        expect { @obj.castee.parent.will == @obj }
         
         expect { @obj.castees.class.will == Array }
         expect { @obj.castees[0].class.will == Foo }
         expect { @obj.castees[0]['foo'].will == 'foo' }
+        expect { @obj.castees[0].parent.will == @obj }
         expect { @obj.castees[1].class.will == Bar }
         expect { @obj.castees[1]['foo'].will == 'bar' }
+        expect { @obj.castees[1].parent.will == @obj }
       end
       
       context "when as time" do
@@ -149,6 +154,7 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
             @obj = Exposer.new(:other_doc => "other_doc", :other_docs => ["other_docs_1", "other_docs_2"])
             @obj.database = @db
           end
+          
           context "when the document exists" do
             before do
               @db.bulk_save([
@@ -182,6 +188,17 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
           context "when the document is missing" do
             expect { lambda{@obj.other_doc}.will raise_error(RestClient::ResourceNotFound) }
             expect { lambda{@obj.other_docs}.will raise_error(RestClient::ResourceNotFound) }
+          end
+          
+          context "when the doucment has a parent" do
+            before do
+              @obj.castee = Foo.new({})
+              @obj.castee.ref = 'other_doc'
+              @obj.save
+              @db.save_doc({'.kind' => 'Foo', '_id' => 'other_doc'})
+            end
+            
+            expect { @obj.castee.ref.rev.will == @db.get('other_doc')['_rev'] }
           end
         end
         
