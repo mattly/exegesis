@@ -166,8 +166,8 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
     end
     
     context "initial save" do
-      expect { @obj.created_at.to_f.will be_close(Time.now.to_f) }
-      expect { @obj.updated_at.to_f.will be_close(Time.now.to_f) }
+      expect { @obj.created_at.to_f.will be_close(Time.now.to_f, 1) }
+      expect { @obj.updated_at.to_f.will be_close(Time.now.to_f, 1) }
     end
     
     context "when created_at already exists" do
@@ -178,8 +178,8 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
         @obj = Timestamper.new(@db.get(@obj.id))
       end
       
-      expect { @obj.created_at.to_f.will be_close(Time.now.to_f) }
-      expect { @obj.updated_at.to_f.will be_close(Time.now.to_f) }
+      expect { @obj.created_at.to_f.will be_close(Time.now.to_f, 1) }
+      expect { @obj.updated_at.to_f.will be_close(Time.now.to_f, 1) }
     end
     
   end
