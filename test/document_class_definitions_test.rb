@@ -3,30 +3,30 @@ require File.join(File.dirname(__FILE__), 'test_helper.rb')
 class Foo < Exegesis::Document; end
 class Bar < Exegesis::Document; end
 
-class Caster < Exegesis::Document
-  cast 'castee'
-  cast 'castees'
-  cast 'time', :as => Time
-  cast 'regex', :as => Regexp
-  cast 'regexen', :as => Regexp
-end
 class WithDefault < Exegesis::Document
   default :foo => 'bar'
 end
+
 class Exposer < Exegesis::Document
   expose :foo, :bar
-  show :baz
+  expose :read_only, :writer => false
+  expose :custom_writer, :writer => lambda {|val| {'value' => val} }
+  expose :castee, :castees, :as => :given
+  expose :time, :times, :as => Time
+  expose :regex, :regexen, :as => Regexp
+  expose :other_doc, :other_docs, :as => :reference
 end
+
 class Timestamper < Exegesis::Document
   timestamps!
 end
+
 class UniqueSnowflake < Exegesis::Document
   unique_id :set_id
   def set_id
     @unique_id_attempt.zero? ? "snowflake" : "snowflake-#{@unique_id_attempt}"
   end
 end
-
 
 class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
   
@@ -59,86 +59,100 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
     end
   end
   
-  context "casting keys into classes" do
-    before do
-      @caster = Caster.new({
-        'castee' => {'foo' => 'bar', '.kind' => 'Foo'},
-        'castees' => [{'foo' => 'bar', '.kind' => 'Foo'}, {'foo' => 'baz', '.kind' => 'Bar'}],
-        'time' => Time.now.to_json,
-        'regex' => 'foo', 
-        'regexen' => ['foo', 'bar']
-      })
-    end
-    
-    expect { @caster['castee'].will be_kind_of(Foo) }
-    expect { @caster['castee']['foo'].will == 'bar' }
-    # expect { @caster['castee'].parent.will == @caster }
-    
-    expect { @caster['regex'].will be_kind_of(Regexp) }
-    expect { @caster['regex'].will == /foo/ }
-
-    expect { @caster['time'].will be_kind_of(Time) }
-
-    expect { @caster['castees'].will be_kind_of(Array) }
-    expect { @caster['castees'].first.will be_kind_of(Foo) }
-    expect { @caster['castees'].first['foo'].will == 'bar' }
-    # expect { @caster['castees'].first.parent.will == @caster }
-    expect { @caster['castees'].last.will be_kind_of(Bar) }
-    expect { @caster['castees'].last['foo'].will == 'baz' }
-    # expect { @caster['castees'].last.parent.will == @caster }
-    
-    expect { @caster['regexen'].will be_kind_of(Array) }
-    expect { @caster['regexen'].first.will be_kind_of(Regexp) }
-    expect { @caster['regexen'].last.will be_kind_of(Regexp) }
-    expect { @caster['regexen'].first.will == /foo/ }
-    expect { @caster['regexen'].last.will == /bar/ }
-    
-    context "with bad syntax" do
-      expect { lambda{Caster.class_eval {cast :foo, Time} }.will raise_error(ArgumentError) }
-    end
-    
-    context "with a nil value" do
-      before do
-        @caster = Caster.new({
-          'castee' => nil,
-          'castees' => nil,
-          'regexen' => ['foo', nil]
-        })
-      end
-      
-      expect { @caster['castee'].will be(nil) }
-      expect { @caster['castees'].will be(nil) }
-      expect { @caster['regexen'].will == [/foo/] }
-    end
-  end
-  
   context "default objects" do
     expect { WithDefault.new['foo'].will == 'bar' }
     expect { WithDefault.new({'foo' => 'baz'})['foo'].will == 'baz' }
   end
   
-  context "exposing keys as methods" do
-    before do
-      @obj = Exposer.new(:foo => 'bar', :bar => 'foo', :baz => 'bee')
+  context "exposing keys" do
+    context "regular declarations" do
+      before do 
+        @obj = Exposer.new(:foo => 'bar', :bar => 'foo')
+        @writing = lambda { @obj.bar = "bee" }
+      end
+      expect { @obj.foo.will == 'bar' }
+      expect { @obj.bar.will == 'foo' }
+      expect { @writing.wont raise_error }
+      expect { @writing.call; @obj.bar.will == "bee" }
     end
     
-    expect { @obj.will respond_to(:foo) }
-    expect { @obj.foo.will == 'bar' }
-    expect { @obj.will respond_to(:bar) }
-    expect { @obj.bar.will == 'foo' }
-    expect { @obj.will respond_to(:baz) }
-    expect { @obj.baz.will == 'bee' }
-    
-    expect { @obj.will respond_to(:foo=) }
-    expect { @obj.will respond_to(:bar=) }
-    expect { @obj.wont respond_to(:baz=) }
-    
-    describe "writing methods" do
-      before do
-        @obj.foo = "foo"
+    context "with a custom writer" do
+      context "when false" do
+        before { @obj = Exposer.new(:read_only => 'value') }
+        expect { @obj.read_only.will == 'value' }
+        expect { lambda{@obj.read_only = "other value"}.will raise_error(NoMethodError) }
       end
       
-      expect { @obj.foo.will == "foo" }
+      context "when lambda" do
+        before do
+          @obj = Exposer.new(:custom_writer => 'value')
+          @obj.custom_writer = 'other value'
+          @expected = {'value' => 'other value'}
+        end
+        expect { @obj.custom_writer.will == @expected }
+      end
+    end
+    
+    context "when casting a value" do
+      context "when as given" do
+        before do
+          @obj = Exposer.new({
+            :castee => {'foo' => 'foo', '.kind' => 'Foo'},
+            :castees => [{'foo' => 'foo', '.kind' => 'Foo'}, {'foo' => 'bar', '.kind' => 'Bar'}]
+          })
+        end
+        
+        expect { @obj.castee.class.will == Foo }
+        expect { @obj.castee['foo'].will == 'foo' }
+        
+        expect { @obj.castees.class.will == Array }
+        expect { @obj.castees[0].class.will == Foo }
+        expect { @obj.castees[0]['foo'].will == 'foo' }
+        expect { @obj.castees[1].class.will == Bar }
+        expect { @obj.castees[1]['foo'].will == 'bar' }
+      end
+      
+      context "when as time" do
+        before do
+          @obj = Exposer.new({:time => Time.now.to_json, :times => [Time.local(2009,3,1).to_json, Time.local(2009,2,1).to_json]})
+        end
+        
+        expect { @obj.time.class.will == Time }
+        expect { @obj.time.to_f.will be_close(Time.now.to_f, 1) }
+        
+        expect { @obj.times.class.will == Array }
+        expect { @obj.times[0].class.will == Time }
+        expect { @obj.times[0].will == Time.local(2009,3,1) }
+        expect { @obj.times[1].class.will == Time }
+        expect { @obj.times[1].will == Time.local(2009,2,1) }
+      end
+      
+      context "when as non document class" do
+        before do
+          @obj = Exposer.new({
+            :regex => 'foo',
+            :regexen => ['foo', 'bar']
+          })
+        end
+        
+        expect { @obj.regex.will == /foo/ }
+        
+        expect { @obj.regexen.class.will == Array }
+        expect { @obj.regexen[0].will == /foo/ }
+        expect { @obj.regexen[1].will == /bar/ }
+      end
+      
+      context "when as reference" do
+      end
+      
+      context "when the value is nil" do
+        before do
+          @obj = Exposer.new({:castee => nil, :castees => nil, :regexen => ['foo', nil]})
+        end
+        expect { @obj.castee.will be(nil) }
+        expect { @obj.castees.will be(nil) }
+        expect { @obj.regexen.will == [/foo/] }
+      end
     end
   end
   
@@ -147,14 +161,13 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
       reset_db
       @obj = Timestamper.new
       @obj.database = @db
-      # stub(Time).now { Time.utc(2009,1,15) }
       @obj.save
       @obj = Timestamper.new(@db.get(@obj.id))
     end
     
     context "initial save" do
-      expect { @obj['created_at'].to_i.will == Time.now.to_i }
-      expect { @obj['updated_at'].to_i.will == Time.now.to_i }
+      expect { @obj.created_at.to_f.will be_close(Time.now.to_f) }
+      expect { @obj.updated_at.to_f.will be_close(Time.now.to_f) }
     end
     
     context "when created_at already exists" do
@@ -165,8 +178,8 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
         @obj = Timestamper.new(@db.get(@obj.id))
       end
       
-      expect { @obj['created_at'].to_i.will == Time.now.to_i }
-      expect { @obj['updated_at'].to_i.will == Time.now.to_i }
+      expect { @obj.created_at.to_f.will be_close(Time.now.to_f) }
+      expect { @obj.updated_at.to_f.will be_close(Time.now.to_f) }
     end
     
   end
@@ -202,13 +215,6 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
       end
       
       expect { @obj.id.will == 'snowflake-1' }
-    end
-  end
-  
-  context "interacting with rails/merb assumptions" do
-    context "to_param for routes" do
-      before { @doc = Foo.new({'_id' => 'foo'})}
-      expect { @doc.to_param.will == "foo" }
     end
   end
   

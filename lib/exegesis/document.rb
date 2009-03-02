@@ -1,22 +1,42 @@
 module Exegesis
   class Document < CouchRest::Document
     
+    def self.inherited subklass
+      Exegesis.document_classes[subklass.name] = subklass
+    end
+    
     def self.instantiate hash={}
-      ActiveSupport::Inflector.constantize(hash['.kind'] || 'Exegesis::Document').new(hash)
+      Exegesis.document_classes[hash['.kind']].new(hash)
     end
     
-    def self.cast field, opts={}
-      unless opts.kind_of?(Hash) 
-        raise ArgumentError
+    def self.expose *attrs
+      opts = if attrs.last.is_a?(Hash)
+        attrs.pop
+      else
+        {}
       end
-      casts
-      opts[:with] = :parse if ['Time', Time].include?(opts[:as])
-      opts[:with] ||= :new
-      @casts[field.to_s] = opts
-    end
-    
-    def self.casts
-      @casts ||= superclass.respond_to?(:casts) ? superclass.casts : {}
+      
+      [attrs].flatten.each do |attrib|
+        attrib = "#{attrib}"
+        if opts.has_key?(:writer)
+          if opts[:writer]
+            define_method("#{attrib}=") {|val| self[attrib] = opts[:writer].call(val) }
+          end
+        else
+          define_method("#{attrib}=") {|val| self[attrib] = val }
+        end
+        if opts[:as]
+          define_method(attrib) do
+            self[attrib] = if self[attrib].is_a?(Array)
+              self[attrib].map {|val| cast opts[:as], val }.compact
+            else
+              cast opts[:as], self[attrib]
+            end
+          end
+        else
+          define_method(attrib) { self[attrib] }
+        end
+      end
     end
     
     def self.default hash=nil
@@ -27,26 +47,13 @@ module Exegesis
       end
     end
     
-    def self.expose *attrs
-      show attrs
-      [attrs].flatten.each do |attrib|
-        define_method("#{attrib}=") {|val| self["#{attrib}"] = val }
-      end
-    end
-    
-    def self.show *attrs
-      [attrs].flatten.each do |attrib|
-        define_method(attrib) { self["#{attrib}"] }
-      end
-    end
-    
     def self.timestamps!
       define_method :set_timestamps do
         self['updated_at'] = Time.now
         self['created_at'] ||= Time.now
       end
-      cast 'updated_at', :as => Time
-      cast 'created_at', :as => Time
+      expose 'updated_at', :as => Time, :writer => false
+      expose 'created_at', :as => Time, :writer => false
     end
     
     def self.unique_id meth
@@ -77,7 +84,6 @@ module Exegesis
     def initialize keys={}
       apply_default
       super keys
-      cast_keys
       self['.kind'] ||= self.class.to_s
     end
     
@@ -90,10 +96,6 @@ module Exegesis
       save
     end
     
-    def to_param
-      self['_id']
-    end
-    
     private
     
     def apply_default
@@ -102,43 +104,22 @@ module Exegesis
       end
     end
     
-    def cast_keys
-      return unless self.class.casts
-      self.class.casts.each do |key, pattern|
-        next unless self[key]
-        cast_key key, pattern[:as], pattern[:with]
-      end
-    end
-    
-    def cast_key key, as, with
-      return if self[key].nil?
-      self[key] = if self[key].is_a?(Array)
-        self[key].map {|val| cast as, with, val }.compact
-      else
-        cast as, with, self[key]
-      end
-    end
-    
-    def cast as, with, value
+    def cast as, value
       return nil if value.nil?
-      klass = if value.is_a?(Hash)
-        class_for as, value['.kind']
+      klassname = value.is_a?(Hash) ? value['.kind'] : as
+      klass = if klassname.is_a?(Class)
+        klassname
       else
-        class_for as, nil
+        Exegesis.document_classes[klassname]
       end
+      with = klass == Time ? :parse : :new
       casted = klass.send with, value
-      casted.parent = self if casted.respond_to?(:parent=)
       casted
-    end
-    
-    def class_for as, kind
-      return as if as.is_a?(Class)
-      ActiveSupport::Inflector.constantize(as || kind || 'Exegesis::Document')
     end
     
   end
 end
 
-$:.unshift File.dirname(__FILE__)
-require 'document/annotated_reference'
-require 'document/reference'
+# $:.unshift File.dirname(__FILE__)
+# require 'document/annotated_reference'
+# require 'document/referencing'
