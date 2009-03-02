@@ -1,12 +1,16 @@
 require 'rubygems'
 require 'test/unit'
 
-require 'context'
-require 'matchy'
-require 'zebra'
+require 'context'   # with github: gem install jeremymcanally-context
+require 'matchy'    # best bet for now: clone from github and build yourself; when jeremy fixes matchy, jeremymcanally-matchy
+require 'zebra'     # until jeremy updates matchy, download and build yourself, after that, with github: gem install giraffesoft-zebra
 
-require 'ruby-debug'
-Debugger.start
+begin
+  require 'ruby-debug'
+  Debugger.start
+rescue
+  puts "no ruby-debug installed? REAlLY? ok, if that's how you roll..."
+end
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'lib/exegesis'
@@ -32,8 +36,4 @@ class Test::Unit::TestCase
     "http://localhost:5984/exegesis-test#{name.nil? ? '' : "-#{name}"}"
   end
   
-  # def with_couch(%blk)
-  #   test_db_name = method_name.downcase.gsub(/[^-$\w]/,'$$')
-  #   
-  # end
 end
