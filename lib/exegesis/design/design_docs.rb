@@ -3,7 +3,7 @@ require 'digest/md5'
 
 module Exegesis
   class Design
-    module Syncronization
+    module DesignDocs
       
       def self.included(base)
         base.extend ClassMethods
@@ -45,7 +45,7 @@ module Exegesis
           view_name = "by_#{keys.join('_and_')}"
           doc_keys = keys.map {|k| "doc['#{k}']" }
           declared_views[view_name] = {
-            :map => %|function(doc) {
+            'map' => %|function(doc) {
               if (doc['.kind'] == '#{name.sub(/Design$/,'')}' && #{doc_keys.join(' && ')}) {
                 emit(#{keys.length == 1 ? doc_keys.first : "[#{doc_keys.join(', ')}]" }, null);
               }
@@ -62,7 +62,7 @@ module Exegesis
         
         def hash_for_design design
           funcs = design['views'].map do |name, view|
-            "view/#{name}/#{view['map']}/#{view['reduce']}"
+            "//view/#{name}/#{view['map']}/#{view['reduce']}"
           end
           Digest::MD5.hexdigest(funcs.sort.join)
         end
