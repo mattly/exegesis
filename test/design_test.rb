@@ -5,7 +5,7 @@ class BarDesign < Exegesis::Design
   use_design_doc_name :something_else
 end
 
-class TestForDesign < CouchRest::Document; end
+class TestForDesign < Exegesis::Document; end
 
 class ExegesisDesignTest < Test::Unit::TestCase
   
