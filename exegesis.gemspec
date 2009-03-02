@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.date = %q{2009-03-01}
   s.description = %q{TODO}
   s.email = %q{matt@flowerpowered.com}
-  s.files = ["README.rdoc", "VERSION.yml", "lib/exegesis", "lib/exegesis/design", "lib/exegesis/design/design_docs.rb", "lib/exegesis/design.rb", "lib/exegesis/document", "lib/exegesis/document/annotated_reference.rb", "lib/exegesis/document/referencing.rb", "lib/exegesis/document.rb", "lib/exegesis/model", "lib/exegesis/model/state_machine.rb", "lib/exegesis/model/valdiation.rb", "lib/exegesis.rb", "test/design_doc_test.rb", "test/design_test.rb", "test/document_class_definitions_test.rb", "test/document_instance_methods_test.rb", "test/exegesis_test.rb", "test/fixtures", "test/fixtures/designs", "test/fixtures/designs/foos.js", "test/test_helper.rb"]
+  s.files = ["README.rdoc", "VERSION.yml", "lib/exegesis", "lib/exegesis/design", "lib/exegesis/design/design_docs.rb", "lib/exegesis/design.rb", "lib/exegesis/document.rb", "lib/exegesis.rb", "test/design_doc_test.rb", "test/design_test.rb", "test/document_class_definitions_test.rb", "test/document_instance_methods_test.rb", "test/exegesis_test.rb", "test/fixtures", "test/fixtures/designs", "test/fixtures/designs/foos.js", "test/test_helper.rb"]
   s.has_rdoc = true
   s.homepage = %q{http://github.com/mattly/exegesis}
   s.rdoc_options = ["--inline-source", "--charset=UTF-8"]
