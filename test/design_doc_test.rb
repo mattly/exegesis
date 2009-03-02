@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'test_helper.rb')
 
 class FooDesign < Exegesis::Design
   view_by :foo
-  view_by :foo_and_bar
+  view_by :foo, :bar
 end
 class CustomDesignDirDesign < Exegesis::Design
   designs_directory File.join(File.dirname(__FILE__), 'fixtures')
@@ -40,11 +40,11 @@ class ComposingDesignDocTest < Test::Unit::TestCase
       @by_foo_and_bar = @design['views']['by_foo_and_bar']['map']
     end
     
-    expect { @by_foo.will =~ "if (doc['.kind'] == 'Foo' && doc['foo'])" }
-    expect { @by_foo.will =~ "emit(doc.foo, null);" }
+    expect { @by_foo.will include("if (doc['.kind'] == 'Foo' && doc['foo'])") }
+    expect { @by_foo.will include("emit(doc['foo'], null);") }
     
-    expect { @by_foo_and_bar.will =~ "if (doc['.kind'] == 'Foo' && doc['foo'] && doc['bar'])" }
-    expect { @by_foo_and_bar.will =~ "emit([doc.foo, doc.bar], null)" }
+    expect { @by_foo_and_bar.will include("if (doc['.kind'] == 'Foo' && doc['foo'] && doc['bar'])") }
+    expect { @by_foo_and_bar.will include("emit([doc['foo'], doc['bar']], null)") }
   end
   
   context "building a hash a design doc" do
