@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), 'test_helper.rb')
 
-class FooDesign < Exegesis::Design; end
-class BarDesign < Exegesis::Design
+class FoosDesign < Exegesis::Design; end
+class BarsDesign < Exegesis::Design
   use_design_doc_name :something_else
 end
 
@@ -11,14 +11,14 @@ class ExegesisDesignTest < Test::Unit::TestCase
   
   before do
     reset_db
-    @doc = FooDesign.new(@db)
+    @doc = FoosDesign.new(@db)
   end
   
   expect { @doc.database.will == @db }
   expect { @doc.design_doc_name.will == "foos" }
 
-  expect { FooDesign.design_doc_name.will == "foos" }
-  expect { BarDesign.design_doc_name.will == "something_else" }
+  expect { FoosDesign.design_doc_name.will == "foos" }
+  expect { BarsDesign.design_doc_name.will == "something_else" }
   
   context "retrieving documents with #get" do
     before do

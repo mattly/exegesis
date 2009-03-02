@@ -16,7 +16,7 @@ module Exegesis
     end
     
     def self.design_doc_name
-      @design_doc_name ||= ActiveSupport::Inflector.pluralize(name.to_s.sub(/(Design)$/,'').downcase)
+      @design_doc_name ||= name.to_s.sub(/(Design)$/,'').downcase
     end
     
     def design_doc_name
