@@ -11,7 +11,7 @@ begin
     s.homepage = "http://github.com/mattly/exegesis"
     s.description = "TODO"
     s.authors = ["Matt Lyon"]
-    s.add_dependency('jchris-couchrest', '= 0.12.6')
+    s.add_dependency('jchris-couchrest', '>= 0.12.6')
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
