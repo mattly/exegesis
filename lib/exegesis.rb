@@ -2,6 +2,7 @@ require 'time'
 require 'pathname'
 
 require 'couchrest'
+require 'active_support/inflector'
 
 $:.unshift File.dirname(__FILE__) unless $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
 
