@@ -15,25 +15,29 @@ end
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 require 'lib/exegesis'
 
+class TestingDatabase
+  include Exegesis::Database
+end
+
 class Test::Unit::TestCase
   
   def fixtures_path fixtures
     File.join(File.dirname(__FILE__), 'fixtures', fixtures)
   end
   
-  # todo: extract to some helper methods to include ala RR, etc
-  def reset_db(name=nil)
-    @db = CouchRest.database db(name) rescue nil
-    @db.delete! rescue nil
-    @db = CouchRest.database! db(name)
+  def db_server
+    @db_server ||= Exegesis::Server.new('http://localhost:5984')
   end
   
-  def teardown_db
-    @db.delete! rescue nil
+  # todo: extract to some helper methods to include ala RR, etc
+  def reset_db(name=nil)
+    RestClient.delete "http://localhost:5984/#{db(name)}" rescue nil
+    db_server.create_database(db(name))
+    @db = TestingDatabase.new(db_server, db(name))
   end
   
   def db(name)
-    "http://localhost:5984/exegesis-test#{name.nil? ? '' : "-#{name}"}"
+    "exegesis-test#{name.nil? ? '' : "-#{name}"}"
   end
   
 end

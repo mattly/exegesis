@@ -1,112 +1,192 @@
 require File.join(File.dirname(__FILE__), 'test_helper.rb')
 
-class FoosDesign < Exegesis::Design; end
-class BarsDesign < Exegesis::Design
-  use_design_doc_name :something_else
+class DesignTestDoc
+  include Exegesis::Document
+  
 end
 
-class TestForDesign < Exegesis::Document; end
+class DesignTestDatabase
+  include Exegesis::Database
+  
+  designs_directory "#{File.dirname(__FILE__)}/fixtures/designs"
+  
+  design :tags do
+    docs :by_tag
+    hash :count, :view => :by_tag
+  end
+  
+  design :stuff, :name => 'things', :directory => 'app/designs/stuff' do
+    
+  end
+end
 
 class ExegesisDesignTest < Test::Unit::TestCase
   
-  before do
+  def setup_db(with_doc=true)
     reset_db
-    @doc = FoosDesign.new(@db)
-  end
-  
-  expect { @doc.database.will == @db }
-  expect { @doc.design_doc_name.will == "foos" }
-
-  expect { FoosDesign.design_doc_name.will == "foos" }
-  expect { BarsDesign.design_doc_name.will == "something_else" }
-  
-  context "retrieving documents with #get" do
-    before do
-      @db.save_doc '_id' => 'foo', 'foo' => 'bar', '.kind' => 'TestForDesign'
-      @obj = @doc.get('foo')
-    end
-    
-    expect { @obj.will be_kind_of(TestForDesign) }
-    expect { @obj['foo'].will == 'bar' }
-  end
-  
-  context "retreiving views" do
-    before do
-      @raw_docs = [
-        {'_id' => 'bar', 'foo' => 'bar', 'bar' => 'bar', '.kind' => 'TestForDesign'},
-        {'_id' => 'baz', 'foo' => 'baz', 'bar' => 'baz', '.kind' => 'TestForDesign'},
-        {'_id' => 'foo', 'foo' => 'foo', 'bar' => 'foo', '.kind' => 'TestForDesign'}
-      ]
-      @db.bulk_save @raw_docs
-      @db.save_doc({
-        '_id' => '_design/foos',
+    @db = DesignTestDatabase.new('exegesis-test')
+    if with_doc
+      @db.save({
+        '_id' => '_design/tags',
         'views' => {
-          'test' => { 'map'=>'function(doc) {emit(doc.foo, doc.bar);}' },
-        }
+          'by_tag' => { 
+            'map' => 'function(doc) { for (var tag in doc.tags) { emit(doc.tags[tag], 1); } }',
+            'reduce' => 'function(keys, values, rereduce) { return sum(values); }' 
+        }}
       })
     end
+  end
+  
+  context "design instances" do
+    before { setup_db }
+    expect { @db.tags.database.will == @db }
+  end
+  
+  context "design declarations" do
+    before { setup_db }
+    expect { @db.tags.class.will == DesignTestDatabase::TagsDesign }
+    expect { @db.tags.is_a?(Exegesis::Design).will == true }
+    expect { @db.tags.design_name.will == 'tags' }
+  end
+  
+  context "view declarations" do
+    before do
+      setup_db
+      @docs = [
+        {'class' => 'DesignTestDoc', 'tags' => %w(foo bar bee)},
+        {'class' => 'DesignTestDoc', 'tags' => %w(foo bar baz)},
+        {'class' => 'DesignTestDoc', 'tags' => %w(foo bee ruby)}
+      ]
+      @db.save(@docs)
+    end
     
-    context "parsing options" do
-      context "when the key is a range" do
-        before { @opts = @doc.parse_opts(:key => 'bar'..'baz') }
-        
-        expect { @opts[:key].will == nil }
+    context "declared docs" do
+      describe "with default key" do
+        before { @response = @db.tags.by_tag('foo') }
+        expect { @response.kind_of?(Array).will == true }
+        expect { @response.size.will == @docs.select{|d| d['tags'].include?('foo')}.size }
+        expect { @response.all? {|d| d.kind_of?(DesignTestDoc) }.will == true }
+        expect { @response.all? {|d| d['tags'].include?('foo') }.will == true }
+      end
+      
+      describe "with multiple keys" do
+        before { @response = @db.tags.by_tag :keys => %w(bar bee) }
+        expect { @response.kind_of?(Array).will == true }
+        expect { @response.size.will == 3 }
+        # expect { @response.size.will == @docs.select{|d| (d['tags'] & %w(bar bee)).size > 0}.size }
+        expect { @response.all? {|d| d.kind_of?(DesignTestDoc) }.will == true }
+      end
+    end
+    
+    context "declared hashes" do
+      before do
+        @counts = Hash.new(0)
+        @docs.each {|doc| doc['tags'].each {|tag| @counts[tag] += 1 } }
+      end
+      expect { @db.tags.count.should == @counts }
+      expect { @db.tags.count(:group => false).should == @counts.values.inject(0){|sum,n| sum+=n } }
+      expect { @db.tags.count('foo').should == @counts['foo'] }
+    end
+  end
+  
+  context "parsing query options" do
+    before { setup_db }
+    
+    context "with a key as an initial arguemnt" do
+      expect { @db.tags.parse_opts('foo').will == {:key => 'foo'} }
+      expect { @db.tags.parse_opts('foo', :include_docs => true).will == {:key => 'foo', :include_docs => true} }
+      expect { @db.tags.parse_opts('foo', {:stale => 'ok'}, {:include_docs => true}).will == {:key => 'foo', :stale => 'ok', :include_docs => true }}
+    end
+    
+    context "without an implied key" do
+      expect { @db.tags.parse_opts(:key => 'foo').will == {:key => 'foo'} }
+      expect { @db.tags.parse_opts({:key => 'foo'}, nil, {:stale => 'ok'}).will == {:key => 'foo', :stale => 'ok'} }
+    end
+    
+    context "when a keys option is empty" do
+      expect { @db.tags.parse_opts(:keys => []).will == {} }
+    end
+    
+    context "for ranges" do
+      context "when the key _is_ a range" do
+        before { @opts = @db.tags.parse_opts(:key => 'bar'..'baz') }
+        expect { @opts.has_key?(:key).will == false }
         expect { @opts[:startkey].will == 'bar' }
-        expect { @opts[:endkey].will == 'baz' }
+        expect { @opts[:endkey].will == 'baz'}
       end
       
-      context "when the key is an array with a range in it" do
-        before { @opts = @doc.parse_opts(:key => ['published', '2008'..'2008/13']) }
+      context "when the key is an array that includes a range" do
+        before { @opts = @db.tags.parse_opts(:key => ['published', '2009'..'2009/04']) }
+        expect { @opts.has_key?(:key).will == false }
+        expect { @opts[:startkey].will == ['published', '2009'] }
+        expect { @opts[:endkey].will == ['published', '2009/04'] }
+      end
+      
+      context "for non inclusive ranges" do; end
+      context "when descending:true is an option" do
+        context "and first value is greater than the end value" do; end
+      end
+      context "when the first value is greater than the end value" do; end
+      
+      context "invalid option configurations" do
+        expect { lambda {@db.tags.parse_opts(:startkey => 'foo')}.will raise_error(ArgumentError) }
+      end
+    end
+  end
+  
+  context "design doc meta declarations" do
+    expect { DesignTestDatabase::StuffDesign.design_name.will == "things" }
+    expect { DesignTestDatabase::StuffDesign.design_directory.will == Pathname.new("app/designs/stuff") }
+  end
+  
+  context "the design document" do
+    before do
+      @canonical = DesignTestDatabase::TagsDesign.canonical_design
+    end
+    
+    context "composing the canonical version" do
+      context "from files" do
+        expect { @canonical['views']['by_tag']['map'].will == File.read(fixtures_path('designs/tags/views/by_tag/map.js')) }
+        expect { @canonical['views']['by_tag']['reduce'].will == File.read(fixtures_path('designs/tags/views/by_tag/reduce.js')) }
+      end
+      
+      context "from class declarations" do
+        # tk
+      end
+    end
+    
+    context "syncronizing" do
+      context "when the design_doc doesn't exist in the db yet" do
+        before do 
+          setup_db(false)
+          @db.tags
+        end
+        expect { lambda{@db.get('_design/tags')}.wont raise_error }
+        expect { @db.tags['views'].will == @canonical['views'] }
+        expect { @db.tags.rev.will =~ /\d-\d{10}/ }
+      end
+      
+      context "when the design_doc exists but is not canonical" do
+        before do
+          # there are no line breaks in the version that setup_db posts
+          setup_db
+          @old = @db.get('_design/tags')
+          @db.tags
+        end
         
-        expect { @opts[:key].will be(nil) }
-        expect { @opts[:startkey].will == ['published', '2008'] }
-        expect { @opts[:endkey].will == ['published', '2008/13'] }
+        expect { @db.tags.rev.wont == @old['_rev'] }
       end
       
-      context "when a keys option is empty" do
-        before { @opts = @doc.parse_opts(:keys => []) }
+      context "when the design_doc exists and is canonical" do
+        before do
+          setup_db(false)
+          @db.put('_design/tags', DesignTestDatabase::TagsDesign.canonical_design)
+          @old = @db.get('_design/tags')
+          @db.tags
+        end
         
-        expect { @opts[:keys].will be(nil) }
+        expect { @db.tags.rev.will == @old['_rev'] }
       end
-    end
-    
-    context "when no key, keys, startkey or all option is present" do
-      before { @response = @doc.view :test }
-      
-      expect { @response.will == [] }
-    end
-
-    context "with an all key" do
-      before { @response = @doc.view :test, :all => true }
-      
-      expect { @response.will == @raw_docs.map{|d| {'id' => d['_id'], 'key' => d['foo'], 'value' => d['bar']} } }
-    end
-
-    context "with docs" do
-      before { @response = @doc.docs_for :test, :key => 'foo' }
-    
-      expect { @response.will be_kind_of(Array) }
-      expect { @response.size.will == 1 }
-      expect { @response.first.will be_kind_of(TestForDesign) }
-      expect { @response.first['foo'].will == 'foo' }
-    end
-    
-    context "for the view's data" do
-      before { @response = @doc.values_for :test, :all => true }
-      
-      expect { @response.will == %w(bar baz foo) }
-    end
-    
-    context "for the view's matching keys" do
-      before { @response = @doc.keys_for :test, :key => 'bar'..'baz' }
-      
-      expect { @response.will == %w(bar baz) }
-    end
-    
-    context "for the view's matching ids" do
-      before { @response = @doc.ids_for :test, :key => 'bar'..'foo'}
-      
-      expect { @response.will == %w(bar baz foo) }
     end
   end
   

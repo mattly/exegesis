@@ -9,9 +9,9 @@ begin
     s.summary = "TODO"
     s.email = "matt@flowerpowered.com"
     s.homepage = "http://github.com/mattly/exegesis"
-    s.description = "TODO"
+    s.description = "A Document <> Object Mapper for CouchDB Documents"
     s.authors = ["Matt Lyon"]
-    s.add_dependency('jchris-couchrest', '>= 0.12.6')
+    s.add_dependency('rest-client', '>= 0.12.6')
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"

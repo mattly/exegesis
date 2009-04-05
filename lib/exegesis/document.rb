@@ -1,153 +1,93 @@
 module Exegesis
-  class Document < CouchRest::Document
+  module Document
     
-    def self.inherited subklass
-      Exegesis.document_classes[subklass.name] = subklass
+    def self.included base
+      base.send :include, Exegesis::Model
+      base.extend ClassMethods
+      base.send :include, InstanceMethods
+      base.send :attr_accessor, :database
+    end
+
+    module ClassMethods
+      def timestamps!
+        define_method :set_timestamps do
+          @attributes['updated_at'] = Time.now
+          @attributes['created_at'] ||= Time.now
+        end
+        expose 'updated_at', :as => Time, :writer => false
+        expose 'created_at', :as => Time, :writer => false
+      end
+    
+      def unique_id meth=nil, &block
+        if block
+          @unique_id_method = block
+        elsif meth
+          @unique_id_method = meth
+        else
+          @unique_id_method ||= nil
+        end
+      end
     end
     
-    def self.instantiate hash={}
-      Exegesis.document_classes[hash['.kind']].new(hash)
-    end
-    
-    def self.expose *attrs
-      opts = if attrs.last.is_a?(Hash)
-        attrs.pop
-      else
-        {}
+    module InstanceMethods
+      def initialize hash={}, db=nil
+        super hash
+        @database = db
       end
       
-      [attrs].flatten.each do |attrib|
-        attrib = "#{attrib}"
-        if opts.has_key?(:writer)
-          if opts[:writer]
-            define_method("#{attrib}=") {|val| self[attrib] = opts[:writer].call(val) }
-          end
+      def == other
+        self.id == other.id
+      end
+      
+      def id
+        @attributes['_id']
+      end
+      
+      def rev
+        @attributes['_rev']
+      end
+      
+      def save
+        set_timestamps if respond_to?(:set_timestamps)
+        if self.class.unique_id && id.nil?
+          save_with_custom_unique_id
         else
-          define_method("#{attrib}=") {|val| self[attrib] = val }
-        end
-        if opts[:as]
-          if opts[:as] == :reference
-            define_method(attrib) do |*reload|
-              reload = false if reload.empty?
-              instance_variable_set("@#{attrib}", nil) if reload
-              return instance_variable_get("@#{attrib}") if instance_variable_get("@#{attrib}")
-              instance_variable_set("@#{attrib}", load_reference(self[attrib]))
-            end
-          else
-            define_method(attrib) do
-              self[attrib] = if self[attrib].is_a?(Array)
-                self[attrib].map {|val| cast opts[:as], val }.compact
-              else
-                cast opts[:as], self[attrib]
-              end
-            end
-          end
-        else
-          define_method(attrib) { self[attrib] }
+          save_document
         end
       end
-    end
-    
-    def self.default hash=nil
-      if hash
-        @default = hash
-      else
-        @default ||= superclass.respond_to?(:default) ? superclass.default : {}
+      
+      def update_attributes attrs={}
+        raise ArgumentError, 'must include a matching _rev attribute' unless rev == attrs.delete('_rev')
+        super attrs
+        save
       end
-    end
-    
-    def self.timestamps!
-      define_method :set_timestamps do
-        self['updated_at'] = Time.now
-        self['created_at'] ||= Time.now
+      
+      private
+      
+      def save_document
+        raise ArgumentError, "canont save without a database" unless database
+        database.save self.attributes
       end
-      expose 'updated_at', :as => Time, :writer => false
-      expose 'created_at', :as => Time, :writer => false
-    end
-    
-    def self.unique_id meth
-      define_method :set_unique_id do
-        self['_id'] = self.send(meth)
-      end
-    end
-    
-    alias :_rev :rev
-    alias_method :document_save, :save
-    
-    attr_accessor :parent
-    
-    def save
-      raise ChildError, "cannot save if a parent is set" if parent
-      set_timestamps if respond_to?(:set_timestamps)
-      if respond_to?(:set_unique_id) && id.nil?
-        @unique_id_attempt = 0
+      
+      def save_with_custom_unique_id
+        attempt = 0
+        value = ''
         begin
-          self['_id'] = set_unique_id
-          document_save
+          @attributes['_id'] = if self.class.unique_id.is_a?(Proc)
+            self.class.unique_id.call(self, attempt)
+          else
+            self.send(self.class.unique_id, attempt)
+          end
+          save_document
         rescue RestClient::RequestFailed => e
-          @unique_id_attempt += 1
+          oldvalue = value
+          value = @attributes['_id']
+          raise RestClient::RequestFailed if oldvalue == value || attempt > 100
+          attempt += 1
           retry
         end
-      else
-        document_save
-      end
-    end
-    
-    def initialize keys={}
-      apply_default
-      super keys
-      self['.kind'] ||= self.class.to_s
-    end
-    
-    def update_attributes attrs={}
-      raise ArgumentError, 'must include a matching _rev attribute' unless rev == attrs.delete('_rev')
-      attrs.each_pair do |key, value| 
-        self.send("#{key}=", value) rescue nil
-        attrs.delete(key)
-      end
-      save
-    end
-    
-    private
-    
-    def apply_default
-      self.class.default.each do |key, value|
-        self[key] = value
-      end
-    end
-    
-    def cast as, value
-      return nil if value.nil?
-      klass = if as == :given
-        if value.is_a?(Hash)
-          Exegesis.document_classes[value['.kind']]
-        else
-          nil #nfi what do to in this case; maybe just have it be a doc hash?
-        end
-      elsif as.is_a?(Class)
-        as
-      else
-        Exegesis.document_classes[nil] # whatever the default is? Hell idk.
-      end
-
-      with = klass == Time ? :parse : :new
-      casted = klass.send with, value
-      casted.parent = self if casted.respond_to?(:parent)
-      casted
-    end
-    
-    def load_reference ids
-      raise ArgumentError, "a database is required for loading a reference" unless database || (parent && parent.database)
-      if ids.is_a?(Array)
-        ids.map {|val| Exegesis::Document.instantiate((database || parent && parent.database).get(val)) }
-      else
-        Exegesis::Document.instantiate((database || parent && parent.database).get(ids))
       end
     end
     
   end
 end
-
-# $:.unshift File.dirname(__FILE__)
-# require 'document/annotated_reference'
-# require 'document/referencing'

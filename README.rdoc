@@ -1,19 +1,63 @@
 = exegesis
 
+by Matthew Lyon <matt@flowerpowered.com>
 * http://github.com/mattly/exegesis
 
-== DESCRIPTION:
+== Description:
 
-An ODM (Object/Document Mapper) for Couchdb. Still very much a work in progress
+A CouchDB ODM (Object/Document Mapper) in Ruby.
 
-== FEATURES/PROBLEMS:
+== Features:
 
-* Encourages Per-"Account" databases. This is both a feature and a problem, since classes cannot know which database to pull from you cannot do f.e. "Article.find('foo')" as Article doesn't know what database to use.
-* Does not provide it's own validators or callbacks. I have a solution in mind for this involving state machines.
+Encourages per-"Account" databases. Actually, does not even currently provide a way to do a 
+"singleton" or global database, however this is planned. Since a given class (say, "Article") 
+cannot know what database it is supposed to get/search from you cannot do classical class-based 
+finders such as "Article.find('value')".
 
-== REQUIREMENTS:
+CouchDB is table-less, and Exegesis's design reflects this. In CouchDB, Documents are retrieved 
+by their unique id, or can be queried from a view function in a design document. Exegesis provides
+tools to aid this. Additionally, since view functions can be used for map/reduce computations against
+your documents, Exegesis helps you get non-document data out of your views.
 
-* Johnson (and Spidermonkey, if you have CouchDB you have Spidermonkey)
+== Examples:
+
+    class Account
+      include Exegesis::Database
+      
+      # declares the existence of a design document named 'articles'
+      # view functions will be loaded from 'views/articles/:viewname/*.js
+      design :articles do
+        docs :by_author
+        docs :at_path
+        docs :tagged_with
+        hash :tags_count, :view => :tagged_with
+      end
+    end
+    
+    @account.articles.by_author('user-mattly')
+    # performs GET '/_design/articles/_view/by_author?key="user-mattly"&include_docs=true&reduce=false'
+    @account.articles.at_path('blog/2009'..'blog/2009/04/04')
+    # transforms the range into startkey/endkey
+    # performs GET '/_design/articles/_view/at_path?startkey="blog/2009"&endkey="blog/2009/04/04"
+    #               &include_docs=true&reduce=false'
+    @account.articles.tags_count('couchdb')
+    # performs GET '/_design/articles/_view/tagged_with?key="couchdb"&group=true'
+    
+    class Article
+      include Exegesis::Document
+      
+      # defines readers, writers for given attributes
+      expose :path, :title, :body, :tags
+      expose :published_at, :writer => false, :as => Time
+      timestamps!
+      
+      # will load the document at the id referenced by doc['author']; does not yet set writer.
+      expose :author, :as => :reference
+    end
+
+== Requirements:
+
+* RestClient
 
 For running the tests:
 
