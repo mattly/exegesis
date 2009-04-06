@@ -121,7 +121,7 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
       reset_db
     end
 
-    context "updating_attributes" do
+    context "updating attributes" do
     
       context "an existing doc" do
         before do
@@ -152,7 +152,26 @@ class ExegesisDocumentClassDefinitionsTest < Test::Unit::TestCase
           expect { @action.will raise_error(NoMethodError) }
         end
       end
-    
+      
+      context "a new doc" do
+        before { @doc = TestDocument.new({'foo' => 'bar'}, @db) }
+        
+        context "without a rev" do
+          before { @doc.update_attributes({'foo' => 'baz'}) }
+          expect { @doc['foo'].will == 'baz' }
+        end
+
+        context "with a blank rev" do
+          before { @doc.update_attributes({'foo' => 'baz', '_rev' => ''}) }
+          expect { @doc['foo'].will == 'baz' }
+        end
+        context "with a non blank rev" do
+          before { @action = lambda{@doc.update_attributes({'foo'=>'baz', '_rev'=>'1-3034523523'})} }
+          expect { @action.will raise_error(ArgumentError)}
+        end
+      end
+      
+      
     end
   end
   

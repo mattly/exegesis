@@ -57,7 +57,7 @@ module Exegesis
       end
       
       def update_attributes attrs={}
-        raise ArgumentError, 'must include a matching _rev attribute' unless rev == attrs.delete('_rev')
+        raise ArgumentError, 'must include a matching _rev attribute' unless (rev || '') == (attrs.delete('_rev') || '')
         super attrs
         save
       end
