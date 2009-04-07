@@ -25,12 +25,28 @@ module Exegesis
     @model_classes ||= {}
   end
   
-  def instantiate hash, database=nil
-    return nil if hash.nil?
-    klass = model_classes[hash['class']]
-    obj = klass.nil? ? hash : klass.new(hash)
-    obj.database = database if obj.respond_to?(:database=)
-    obj
+  # extracted from Extlib
+  #
+  # Constantize tries to find a declared constant with the name specified
+  # in the string. It raises a NameError when the name is not in CamelCase
+  # or is not initialized.
+  #
+  # @example
+  # "Module".constantize #=> Module
+  # "Class".constantize #=> Class
+  def constantize(camel_cased_word)
+    unless /\A(?:::)?([A-Z]\w*(?:::[A-Z]\w*)*)\z/ =~ camel_cased_word
+      raise NameError, "#{camel_cased_word.inspect} is not a valid constant name!"
+    end
+
+    Object.module_eval("::#{$1}", __FILE__, __LINE__)
+  end
+  
+  def instantiate(doc, database)
+    return doc if doc['class'].nil?
+    doc = constantize(doc['class']).new(doc)
+    doc.database = database if doc.respond_to?(:database=)
+    doc
   end
   
 end

@@ -4,7 +4,6 @@ module Exegesis
     def self.included base
       base.extend ClassMethods
       base.send :include, InstanceMethods
-      Exegesis.model_classes[base.name] = base
       base.send :attr_accessor, :attributes, :references, :parent
     end
     
@@ -110,7 +109,7 @@ module Exegesis
       def cast as, value
         return nil if value.nil?
         klass = if as == :given && value.is_a?(Hash)
-          Exegesis.model_classes[value['class']]
+          Exegesis.constantize(value['class'])
         elsif as.is_a?(Class)
           as
         else

@@ -8,7 +8,7 @@ end
 class DesignTestDatabase
   include Exegesis::Database
   
-  designs_directory "#{File.dirname(__FILE__)}/fixtures/designs"
+  designs_directory "test/fixtures/designs"
   
   design :tags do
     docs :by_tag
@@ -163,7 +163,7 @@ class ExegesisDesignTest < Test::Unit::TestCase
         end
         expect { lambda{@db.get('_design/tags')}.wont raise_error }
         expect { @db.tags['views'].will == @canonical['views'] }
-        expect { @db.tags.rev.will =~ /\d-\d{10}/ }
+        expect { @db.tags.rev.will =~ /\d-\d{6,12}/ }
       end
       
       context "when the design_doc exists but is not canonical" do
