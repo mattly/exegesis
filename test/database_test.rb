@@ -7,6 +7,16 @@ class CustomDesignDirDatabaseTest
   include Exegesis::Database
   designs_directory 'app/designs'
 end
+class NamedDocumentDatabaseTest
+  include Exegesis::Database
+  named_document :settings do
+    expose :things
+  end
+end
+class NamedDocumentWithoutBlockDatabaseTest
+  include Exegesis::Database
+  named_document :blah
+end
 class DatabaseTestDocument
   include Exegesis::Document
 end
@@ -156,6 +166,42 @@ class ExegesisDatabaseTest < Test::Unit::TestCase
   context "setting the designs directory" do
     expect { DatabaseTest.designs_directory.will == Pathname.new('designs') }
     expect { CustomDesignDirDatabaseTest.designs_directory.will == Pathname.new('app/designs') }
+  end
+  
+  context "with a named document" do
+    context "that doesn't exist yet" do
+      before do
+        reset_db
+        @db = NamedDocumentDatabaseTest.new('exegesis-test')
+      end
+      
+      expect { @db.settings.kind_of?(NamedDocumentDatabaseTest::Settings).will == true }
+      expect { @db.settings.rev.will =~ /1-\d{7,12}/ }
+      expect { @db.settings.respond_to?(:things).will == true }
+      expect { @db.settings; lambda{ @db.get('settings') }.wont raise_error(RestClient::ResourceNotFound) }
+    end
+    
+    context "that does exist" do
+      before do
+        reset_db
+        @db = NamedDocumentDatabaseTest.new('exegesis-test')
+        @doc = @db.save({'_id' => 'settings', 'things' => %w(foo bar baz), 'class' => 'NamedDocumentDatabaseTest::Settings'})
+      end
+      
+      expect { lambda { @db.get('settings') }.wont raise_error(RestClient::ResourceNotFound) }
+      expect { @db.settings.rev.will == @doc['_rev'] }
+      expect { @db.settings.rev.will =~ /1-\d{7,12}/ }
+      expect { @db.settings.things.will == %w(foo bar baz) }
+    end
+    
+    context "when the declaration does not have a block" do
+      before do
+        reset_db
+        @db = NamedDocumentWithoutBlockDatabaseTest.new('exegesis-test')
+      end
+      
+      expect { @db.blah.kind_of?(NamedDocumentWithoutBlockDatabaseTest::Blah).will == true }
+    end
   end
   
 end

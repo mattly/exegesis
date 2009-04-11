@@ -19,24 +19,35 @@ module Exegesis
         end
       end
       
-      # A hash mapping design names to class names.
-      def designs
-        @designs ||= {}
-      end
-      
       # declare a design document for this database. Creates a new class and yields a given block to the class to
       # configure the design document and declare views; See Class methods for Exegesis::Design
       def design design_name, opts={}, &block
         klass_name = "#{design_name.to_s.capitalize}Design"
         klass = const_set(klass_name, Class.new(Exegesis::Design))
-        designs[design_name] = klass
         klass.design_directory = opts[:directory] || self.designs_directory + design_name.to_s
         klass.design_name = opts[:name] || design_name.to_s
         klass.compose_canonical
         klass.class_eval &block
         define_method design_name do
-          @designs ||= {}
-          @designs[design_name] ||= klass.new(self)
+          @exegesis_designs ||= {}
+          @exegesis_designs[design_name] ||= klass.new(self)
+        end
+      end
+      
+      def named_document document_name, opts={}, &block
+        klass_name = document_name.to_s.capitalize.gsub(/_(\w)/) { $1.capitalize }
+        klass = const_set(klass_name, Class.new(Exegesis::GenericDocument))
+        klass.unique_id { document_name.to_s }
+        klass.class_eval &block if block
+        define_method document_name do
+          @exegesis_named_documents ||= {}
+          @exegesis_named_documents[document_name] ||= begin
+            get(document_name.to_s)
+          rescue RestClient::ResourceNotFound
+            doc = klass.new({}, self)
+            doc.save
+            doc
+          end
         end
       end
     end
