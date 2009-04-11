@@ -84,7 +84,8 @@ module Exegesis
     
     def initialize db
       begin
-        super db.get("_design/#{design_name}"), db
+        super db.raw_get("_design/#{design_name}")
+        self.database = db
       rescue RestClient::ResourceNotFound
         db.put("_design/#{design_name}", self.class.canonical_design)
         retry
