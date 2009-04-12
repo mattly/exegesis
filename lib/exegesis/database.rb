@@ -82,7 +82,7 @@ module Exegesis
         keys = options.delete(:keys)
         url = Exegesis::Http.format_url "#{@uri}/#{id}", options
         if id.match(%r{^_design/.*/_view/.*$}) && keys
-          Exegesis::Http.post url, {:keys => keys}
+          Exegesis::Http.post url, {:keys => keys}.to_json
         else
           Exegesis::Http.get url
         end

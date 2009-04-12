@@ -50,7 +50,7 @@ class HttpTest < Test::Unit::TestCase
     
     context "post requests" do
       before do
-        @response = Exegesis::Http.post(@db, {'test' => 'value'})
+        @response = Exegesis::Http.post(@db, {'test' => 'value'}.to_json)
       end
       
       expect { @response['ok'].will == true }
@@ -58,7 +58,7 @@ class HttpTest < Test::Unit::TestCase
     
     context "put requests" do
       before do
-        @response = Exegesis::Http.put("#{@db}/test-document", {'test' => 'value'})
+        @response = Exegesis::Http.put("#{@db}/test-document", {'test' => 'value'}.to_json)
       end
       
       expect { @response['ok'].will == true }
