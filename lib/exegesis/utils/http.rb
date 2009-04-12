@@ -18,20 +18,20 @@ module Exegesis
       /^_design\/(.*)/ =~ id ? "_design/#{CGI.escape($1)}" : CGI.escape(id) 
     end
     
-    def get url
-      JSON.parse(RestClient.get(url), :max_nesting => false)
+    def get url, headers={}
+      JSON.parse(RestClient.get(url, headers), :max_nesting => false)
     end
     
-    def post url, body=''
-      JSON.parse(RestClient.post(url, (body || '').to_json))
+    def post url, body='', headers={}
+      JSON.parse(RestClient.post(url, body, headers))
     end
     
-    def put url, body=''
-      JSON.parse(RestClient.put(url, (body || '').to_json))
+    def put url, body='', headers={}
+      JSON.parse(RestClient.put(url, body, headers))
     end
     
-    def delete url
-      JSON.parse(RestClient.delete(url))
+    def delete url, headers={}
+      JSON.parse(RestClient.delete(url, headers))
     end
     
   end

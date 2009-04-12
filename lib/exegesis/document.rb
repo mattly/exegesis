@@ -1,5 +1,10 @@
 module Exegesis
   module Document
+    autoload :Attachments,  'exegesis/document/attachments'
+    autoload :Attachment,   'exegesis/document/attachment'
+    
+    class MissingDatabaseError < StandardError; end
+    class NewDocumentError < StandardError; end
     
     def self.included base
       base.send :include, Exegesis::Model
@@ -35,6 +40,20 @@ module Exegesis
         @database = db
       end
       
+      def uri
+        raise MissingDatabaseError if database.nil?
+        raise NewDocumentError if rev.nil? || id.nil?
+        "#{database.uri}/#{id}"
+      end
+      
+      def reload
+        raise NewDocumentError if rev.nil? || id.nil?
+        raise MissingDatabaseError if database.nil?
+        @attachments = nil
+        @references = nil
+        @attributes = database.raw_get(id)
+      end
+      
       def == other
         self.id == other.id
       end
@@ -54,6 +73,7 @@ module Exegesis
         else
           save_document
         end
+        @attachments.clean! if @attachments && @attachments.dirty?
       end
       
       def update_attributes attrs={}
@@ -62,11 +82,19 @@ module Exegesis
         save
       end
       
+      def attachments
+        @attachments ||= Exegesis::Document::Attachments.new(self)
+      end
+      
+      def to_json
+        @attributes.merge({'_attachments' => @attachments}).to_json
+      end
+      
       private
       
       def save_document
         raise ArgumentError, "canont save without a database" unless database
-        database.save self.attributes
+        database.save self
       end
       
       def save_with_custom_unique_id

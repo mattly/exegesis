@@ -108,17 +108,17 @@ module Exegesis
       end
       
       # PUTs the body to the given id in the database
-      def put id, body
-        Exegesis::Http.put "#{@uri}/#{id}", body
+      def put id, body, headers={}
+        Exegesis::Http.put "#{@uri}/#{id}", (body || '').to_json, headers
       end
       
       # POSTs the body to the database
-      def post url, body={}
+      def post url, body={}, headers={}
         if body.is_a?(Hash) && body.empty?
           body = url
           url = ''
         end
-        Exegesis::Http.post "#{@uri}/#{url}", body
+        Exegesis::Http.post "#{@uri}/#{url}", (body || '').to_json, headers
       end
     end
   end
