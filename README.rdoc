@@ -9,15 +9,9 @@ A CouchDB ODM (Object/Document Mapper) in Ruby.
 
 == Features:
 
-Encourages per-"Account" databases. Actually, does not even currently provide a way to do a 
-"singleton" or global database, however this is planned. Since a given class (say, "Article") 
-cannot know what database it is supposed to get/search from you cannot do classical class-based 
-finders such as "Article.find('value')".
+Encourages per-"Account" databases. Actually, does not even currently provide a way to do a "singleton" or global database, however this is planned. Since a given class (say, "Article") cannot know what database it is supposed to get/search from you cannot do classical class-based finders such as "Article.find('value')".
 
-CouchDB is table-less, and Exegesis's design reflects this. In CouchDB, Documents are retrieved 
-by their unique id, or can be queried from a view function in a design document. Exegesis provides
-tools to aid this. Additionally, since view functions can be used for map/reduce computations against
-your documents, Exegesis helps you get non-document data out of your views.
+CouchDB is table-less, and Exegesis's design reflects this. In CouchDB, Documents are retrieved by their unique id, or can be queried from a view function in a design document. Exegesis provides tools to aid this. Additionally, since view functions can be used for map/reduce computations against your documents, Exegesis helps you get non-document data out of your views.
 
 == Examples:
 
@@ -65,3 +59,5 @@ For running the tests:
 * Context (http://github.com/jeremymcanally/context, can install from github gems)
 * Matchy (http://github.com/jeremymcanally/matchy, github gem version out of date; clone, build & install for now)
 * Zebra (http://github.com/giraffesoft/zerba, depends on jeremymcanally-matchy, which is out of date; clone, build & install for now)
+
+The test suite creates and destroys a database for each test that requires access to the database. This is slow, and the test suite may take some time to run. However, I would rather the test suite be slow and accurate than quick and full of mocking.
