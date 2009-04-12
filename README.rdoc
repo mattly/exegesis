@@ -9,7 +9,7 @@ A CouchDB ODM (Object/Document Mapper) in Ruby.
 
 == Features:
 
-Encourages per-"Account" databases. Actually, does not even currently provide a way to do a "singleton" or global database, however this is planned. Since a given class (say, "Article") cannot know what database it is supposed to get/search from you cannot do classical class-based finders such as "Article.find('value')".
+Encourages per-"Account" databases. Actually, does not even currently provide a way to do a "singleton" or global database, however this is planned. Since a given class (say, "Article") cannot know what database it is supposed to get/search from you cannot do classical class-based finders such as "Article.find('value')". While it might be possible to pass in a database to use for some class-wide view, Exegesis takes the opinion that this is bad design for couchdb for the reasons that views may return multiple document types other than the desired class, and that views should be scoped to objects that mixin the database accessors.
 
 CouchDB is table-less, and Exegesis's design reflects this. In CouchDB, Documents are retrieved by their unique id, or can be queried from a view function in a design document. Exegesis provides tools to aid this. Additionally, since view functions can be used for map/reduce computations against your documents, Exegesis helps you get non-document data out of your views.
 
