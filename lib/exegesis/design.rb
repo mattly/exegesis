@@ -66,15 +66,7 @@ module Exegesis
       define_method name do |*opts|
         key = opts.shift
         options = parse_opts key, opts.first, default_options
-        response = call_view view_name, options
-        ids = []
-        response.inject([]) do |memo, doc|
-          unless ids.include?(doc['id'])
-            ids << doc['id']
-            memo << Exegesis.instantiate(doc['doc'], database)
-          end
-          memo
-        end
+        Exegesis::DocumentCollection.new(call_view(view_name, options), database)
       end
     end
     

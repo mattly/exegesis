@@ -64,18 +64,18 @@ class ExegesisDesignTest < Test::Unit::TestCase
     context "declared docs" do
       describe "with default key" do
         before { @response = @db.things.by_tag('foo') }
-        expect { @response.kind_of?(Array).will == true }
+        expect { @response.kind_of?(Exegesis::DocumentCollection).will == true }
         expect { @response.size.will == @docs.select{|d| d['tags'].include?('foo')}.size }
-        expect { @response.all? {|d| d.kind_of?(DesignTestDoc) }.will == true }
-        expect { @response.all? {|d| d['tags'].include?('foo') }.will == true }
+        expect { @response.documents.all? {|id,d| d.kind_of?(DesignTestDoc) }.will == true }
+        expect { @response.documents.all? {|id,d| d['tags'].include?('foo') }.will == true }
       end
       
       describe "with multiple keys" do
         before { @response = @db.things.by_tag :keys => %w(bar bee) }
-        expect { @response.kind_of?(Array).will == true }
-        expect { @response.size.will == 3 }
-        # expect { @response.size.will == @docs.select{|d| (d['tags'] & %w(bar bee)).size > 0}.size }
-        expect { @response.all? {|d| d.kind_of?(DesignTestDoc) }.will == true }
+        expect { @response.kind_of?(Exegesis::DocumentCollection).will == true }
+        expect { @response.size.will == @docs.inject(0){|sum,d| sum+=(d['tags'] & %w(bar bee)).size } }
+        expect { @response.documents.size.will == @docs.select{|d| (d['tags'] & %w(bar bee)).size > 0}.size }
+        expect { @response.documents.all? {|id,d| d.kind_of?(DesignTestDoc) }.will == true }
       end
       
     end
