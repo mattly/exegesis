@@ -18,7 +18,8 @@ module Exegesis
   autoload :GenericDocument,    'exegesis/document/generic_document'
   
   autoload :Design,             'exegesis/design'
-  
+  autoload :DocumentCollection, 'exegesis/document/collection'
+    
   extend self
   
   def model_classes
