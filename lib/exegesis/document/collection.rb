@@ -60,7 +60,7 @@ module Exegesis
         if non_doc_rows.empty?
           rows.map {|r| docmap[r['id']] = Exegesis.instantiate(r['doc'], database) }
         else
-          database.get(non_doc_rows.map{|r| r['id']}.uniq, :include_docs=>true, :collection=>false).each {|doc| docmap[doc.id] = doc}
+          database.get(non_doc_rows.map{|r| r['id']}.uniq, :include_docs=>true).each {|doc| docmap[doc.id] = doc}
         end
       else
         rows.map {|r| docmap[r['id']] = parent.documents[r['id']] }
