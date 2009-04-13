@@ -1,6 +1,7 @@
 require 'pathname'
 module Exegesis
   class Design
+    
     include Exegesis::Document
     
     def self.design_directory= dir
@@ -36,18 +37,36 @@ module Exegesis
       }
     end
     
+    def self.views
+      @views ||= canonical_design['views'].keys
+    end
+    
+    def self.reduceable? view_name
+      view_name = view_name.to_s
+      views.include?(view_name) && canonical_design['views'][view_name].has_key?('reduce')
+    end
+    
     def self.view name, default_options={}
-      define_method name do |key, *opts|
-        view name, key, opts.first, default_options
+      define_method name do |*opts|
+        options = parse_opts opts.shift, opts.first, default_options
+        call_view name, options
       end
     end
     
     def self.docs name, default_options={}
-      default_options = {:include_docs => true, :reduce => false}.merge(default_options)
+      view_name = default_options.delete(:view) || name
+      raise ArgumentError, "missing view #{view_name}" unless views.include?(view_name.to_s)
+      if [:reduce, :group, :group_level].any? {|key| default_options.has_key?(key)}
+        raise ArgumentError, "cannot reduce (:group, :group_level, :reduce) on a docs view"
+      end
+      
+      default_options = {:include_docs => true}.merge(default_options)
+      default_options.update({:reduce => false}) if reduceable?(view_name)
+
       define_method name do |*opts|
         key = opts.shift
         options = parse_opts key, opts.first, default_options
-        response = call_view name, options
+        response = call_view view_name, options
         ids = []
         response.inject([]) do |memo, doc|
           unless ids.include?(doc['id'])
@@ -60,22 +79,33 @@ module Exegesis
     end
     
     def self.hash name, default_options={}
-      default_options = {:group => true}.merge(default_options)
       view_name = default_options.delete(:view) || name
+      raise ArgumentError, "missing view #{view_name}" unless views.include?(view_name.to_s)
+      raise NameError, "Cannot return a hash for views without a reduce function" unless reduceable?(view_name)
+      if default_options.has_key?(:group) && default_options[:group] == false
+        raise ArgumentError, "cannot turn off grouping for a hash view" 
+      end
+      
+      default_options = {:group => true}.merge(default_options)
+      
       define_method name do |*opts|
-        key = opts.shift
-        options = parse_opts key, opts.first, default_options
-        options.delete(:group) if options[:key]
+        options = parse_opts opts.shift, opts.first, default_options
+
+        if options.has_key?(:group) && options[:group] == false
+          raise ArgumentError, "cannot turn off grouping for a hash view"
+        end
+
+        if options[:key]
+          options.delete(:group)
+          options.delete(:group_level)
+        end
         
         response = call_view view_name, options
         if response.size == 1 && response.first['key'].nil?
           response.first['value']
         else
           response.inject({}) do |memo, row|
-            if ! memo.has_key?(row['key'])
-              memo[row['key']] = row['value']
-            end
-            memo
+            memo.update(row['key'] => row['value'])
           end
         end
       end
@@ -114,6 +144,7 @@ module Exegesis
       parse_key opts
       parse_keys opts
       parse_range opts
+      parse_reduce opts
       opts
     end
     
@@ -149,6 +180,18 @@ module Exegesis
     def parse_range opts
       if opts[:startkey] || opts[:endkey]
         raise ArgumentError, "both a startkey and endkey must be specified if either is" unless opts[:startkey] && opts[:endkey]
+      end
+    end
+    
+    def parse_reduce opts
+      if opts.has_key?(:group)
+        opts[:group_level] = opts.delete(:group) if opts[:group].is_a?(Numeric)
+      end
+      if opts.keys.any? {|key| [:group, :group_level].include?(key) }
+        raise ArgumentError, "cannot include_docs when reducing" if opts[:include_docs]
+        if opts.has_key?(:reduce) && opts[:reduce] == false
+          raise ArgumentError, "cannot reduce=false when either group or group_level is present"
+        end
       end
     end
     
