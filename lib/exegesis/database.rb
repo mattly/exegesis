@@ -90,7 +90,13 @@ module Exegesis
       
       # GETs a document with the given id from the database
       def get id, opts={}
-        Exegesis.instantiate raw_get(id), self
+        if id.kind_of?(Array)
+          collection = opts.delete(:collection) # nil or true for yes, false for no
+          r = post '_all_docs?include_docs=true', {"keys"=>id}
+          r['rows'].map {|d| Exegesis.instantiate d['doc'], self }
+        else
+          Exegesis.instantiate raw_get(id), self
+        end
       end
       
       # saves a document or collection thereof

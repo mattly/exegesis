@@ -91,6 +91,16 @@ class ExegesisDatabaseTest < Test::Unit::TestCase
       expect { @doc['key'].will == 'value' }
       expect { @doc['class'].will == 'DatabaseTestDocument' }
     end
+    
+    context "retrieving multiple documents" do
+      before do
+        docs = [{"_id"=>"a"},{"_id"=>"b"},{"_id"=>"c"}].map{|d| d.update('class' => 'DatabaseTestDocument')}
+        RestClient.post("#{@db.uri}/_bulk_docs", {"docs"=>docs}.to_json)
+      end
+      
+      expect { @db.get(%w(a b c)).size.will == 3 }
+      expect { @db.get(%w(a b c)).all?{|doc| doc.is_a?(DatabaseTestDocument)}.will == true }
+    end
   end
   
   context "saving docs" do
