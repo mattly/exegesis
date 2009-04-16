@@ -10,6 +10,7 @@ module Exegesis
     module ClassMethods
       def expose *attrs
         opts = attrs.last.is_a?(Hash) ? attrs.pop : {}
+        raise ArgumentError, "casted keys cannot have defined writers" if opts[:as] && opts[:writer]
         [attrs].flatten.each do |attrib|
           attrib = attrib.to_s
           if opts[:writer]
@@ -19,6 +20,7 @@ module Exegesis
           end
           if opts[:as] == :reference
             define_reference attrib
+            define_reference_writer attrib unless opts[:writer] == false
           elsif opts[:as]
             define_caster attrib, opts[:as]
           else
@@ -49,6 +51,22 @@ module Exegesis
           @references ||= {}
           @references[attrib] = nil if reload
           @references[attrib] ||= load_reference(@attributes[attrib])
+        end
+      end
+      
+      def define_reference_writer attrib
+        define_writer(attrib) do |val|
+          if val.is_a?(String)
+            @attributes[attrib] = val
+          elsif val.is_a?(Exegesis::Document)
+            if val.rev && val.id
+              @attributes[attrib] = val.id
+            else
+              raise ArgumentError, "cannot reference unsaved documents"
+            end
+          else
+            raise ArgumentError, "was not a document or document id"
+          end
         end
       end
       
@@ -108,6 +126,7 @@ module Exegesis
       
       def cast as, value
         return nil if value.nil?
+        return value unless [String, Array, Hash, Fixnum, Float].include?(value.class)
         klass = if as == :given && value.is_a?(Hash)
           Exegesis.constantize(value['class'])
         elsif as.is_a?(Class)

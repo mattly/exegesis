@@ -14,8 +14,7 @@ class WithDefaultTestModel
 end
 
 class ModelTestDocument
-  include Exegesis::Model
-  attr_accessor :database
+  include Exegesis::Document
 end
 
 class ExposeTestModel
@@ -82,6 +81,8 @@ class ExegesisModelTest < Test::Unit::TestCase
                 {'foo' => 'bar', 'class' => 'BarTestModel'}
               ]
             })
+            @obj.castee
+            @obj.castees
           end
         
           expect { @obj.castee.class.will == FooTestModel }
@@ -95,11 +96,22 @@ class ExegesisModelTest < Test::Unit::TestCase
           expect { @obj.castees[1].class.will == BarTestModel }
           expect { @obj.castees[1]['foo'].will == 'bar' }
           expect { @obj.castees[1].parent.will == @obj }
+          
+          context "defining the writer" do
+            before do
+              @obj = ExposeTestModel.new
+              @foo = FooTestModel.new({'foo' => 'bar'})
+              @obj.castee = @foo
+            end
+            expect { @obj.castee.will == @foo }
+          end
         end
       
         context "when as time" do
           before do
             @obj = ExposeTestModel.new({:time => Time.now.to_json, :times => [Time.local(2009,3,1).to_json, Time.local(2009,2,1).to_json]})
+            @obj.time
+            @obj.times
           end
         
           expect { @obj.time.class.will == Time }
@@ -110,6 +122,18 @@ class ExegesisModelTest < Test::Unit::TestCase
           expect { @obj.times[0].will == Time.local(2009,3,1) }
           expect { @obj.times[1].class.will == Time }
           expect { @obj.times[1].will == Time.local(2009,2,1) }
+          
+          context "writing times" do
+            before do
+              @obj = ExposeTestModel.new
+              @time = Time.now
+              @obj.time = @time
+              @obj.times = [@time, @time]
+            end
+            expect { @obj.time.will == @time }
+            expect { @obj.times[0].will == @time }
+            expect { @obj.times[1].will == @time }
+          end
         end
       
         context "when as non document class" do
@@ -118,6 +142,8 @@ class ExegesisModelTest < Test::Unit::TestCase
               :regex => 'foo',
               :regexen => ['foo', 'bar']
             })
+            @obj.regex
+            @obj.regexen
           end
         
           expect { @obj.regex.will == /foo/ }
@@ -125,6 +151,15 @@ class ExegesisModelTest < Test::Unit::TestCase
           expect { @obj.regexen.class.will == Array }
           expect { @obj.regexen[0].will == /foo/ }
           expect { @obj.regexen[1].will == /bar/ }
+          
+          context "writing values from the class" do
+            before do
+              @obj = ExposeTestModel.new
+              @regex = /foo/
+              @obj.regex = @regex
+            end
+            expect { @obj.regex.will == @regex }
+          end
         end
       
         context "when as reference" do
@@ -133,8 +168,7 @@ class ExegesisModelTest < Test::Unit::TestCase
               reset_db
               @obj = ExposeTestModel.new(:other_doc => "other_doc", 
                                          :other_docs => ["other_docs_1", "other_docs_2"])
-              @doc = ModelTestDocument.new
-              @doc.database = @db
+              @doc = ModelTestDocument.new({}, @db)
               @obj.parent = @doc
             end
           
@@ -186,6 +220,31 @@ class ExegesisModelTest < Test::Unit::TestCase
             before { @obj = ExposeTestModel.new(:other_doc => "some_doc_id") }
             expect { lambda{@obj.other_doc}.will raise_error(ArgumentError) }
           end
+          
+          context "setting references" do
+            before do
+              reset_db
+              @parent = ModelTestDocument.new({}, @db)
+              @obj = ExposeTestModel.new
+              @obj.parent = @parent
+              @doc = ModelTestDocument.new({}, @db)
+              @doc.save
+            end
+            context "from a doc that has been saved" do
+              before do
+                @obj.other_doc = @doc
+              end
+              expect { @obj['other_doc'].will == @doc.id }
+              expect { @obj.other_doc.will == @doc }
+            end
+            context "from an id" do
+              before do
+                @obj.other_doc = @doc.id
+              end
+              expect { @obj['other_doc'].will == @doc.id }
+              expect { @obj.other_doc.will == @doc }
+            end
+          end
         end
       
         context "when the value is nil" do
@@ -196,6 +255,7 @@ class ExegesisModelTest < Test::Unit::TestCase
           expect { @obj.castees.will be(nil) }
           expect { @obj.regexen.will == [/foo/] }
         end
+        
       end
     end
   end
