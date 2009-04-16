@@ -15,7 +15,13 @@ module Exegesis
     end
     
     def escape_id id
-      /^_design\/(.*)/ =~ id ? "_design/#{CGI.escape($1)}" : CGI.escape(id) 
+      if %r{^_design/(.*)/_view/(.*)} =~ id
+        "_design/#{CGI.escape($1)}/_view/#{CGI.escape($2)}"
+      elsif /^_design\/(.*)/ =~ id
+        "_design/#{CGI.escape($1)}"
+      else 
+        CGI.escape(id)
+      end
     end
     
     def get url, headers={}
