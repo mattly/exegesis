@@ -49,7 +49,7 @@ module Exegesis
     def self.view name, default_options={}
       define_method name do |*opts|
         options = parse_opts opts.shift, opts.first, default_options
-        call_view name, options
+        Exegesis::DocumentCollection.new(call_view(name, options), database)
       end
     end
     

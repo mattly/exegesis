@@ -1,5 +1,6 @@
 module Exegesis
   class DocumentCollection
+    include Enumerable
     
     attr_reader :rows, :parent, :index
     

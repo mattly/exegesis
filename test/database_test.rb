@@ -148,6 +148,7 @@ class ExegesisDatabaseTest < Test::Unit::TestCase
             expect { lambda { @db.save(@doc) }.will raise_error }
           end
         end
+        
       end
     end
     
