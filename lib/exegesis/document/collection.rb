@@ -13,6 +13,11 @@ module Exegesis
       @index = index
     end
     
+    def to_s
+      "#<Exegesis::DocumentCollection:#{object_id} database=#{database.uri} rows=#{size} depth=#{index}>"
+    end
+    alias :inspect :to_s
+    
     def database
       @database || @parent.database
     end

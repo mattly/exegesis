@@ -73,13 +73,15 @@ module Exegesis
         @server.get @uri # raise RestClient::ResourceNotFound if the database does not exist
       end
       
-      def inspect
-        "#<#{self.class.name}:#{self.object_id} {#{uri}}>"
+      def to_s
+        "#<#{self.class.name}(Exegesis::Database):#{self.object_id} uri=#{uri}>"
       end
+      alias :inspect :to_s
       
       # performs a raw GET request against the database
       def raw_get id, options={}
         keys = options.delete(:keys)
+        id = Exegesis::Http.escape_id id
         url = Exegesis::Http.format_url "#{@uri}/#{id}", options
         if id.match(%r{^_design/.*/_view/.*$}) && keys
           Exegesis::Http.post url, {:keys => keys}.to_json

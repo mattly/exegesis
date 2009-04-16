@@ -22,7 +22,7 @@ module Exegesis
     end
     
     def inspect
-      "#<Exegesis::Server #{@uri}>"
+      "#<Exegesis::Server:#{object_id} uri=#{@uri}>"
     end
   end
 end

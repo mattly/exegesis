@@ -14,6 +14,11 @@ module Exegesis
         end
       end
       
+      def to_s
+        "#<Exegesis::Document::Attachments document=#{@document.uri} attachments=#{keys.join(', ')}>"
+      end
+      alias :inspect :to_s
+      
       def dirty?
         @dirty || false
       end

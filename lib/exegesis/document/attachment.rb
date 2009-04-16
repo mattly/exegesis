@@ -10,6 +10,11 @@ module Exegesis
         @name = name
       end
       
+      def to_s
+        "#<Exegesis::Document::Attachment document=#{@document.uri} #{@metadata.inspect}>"
+      end
+      alias :inspect :to_s
+      
       def content_type
         @metadata['content_type']
       end
@@ -32,10 +37,6 @@ module Exegesis
         else
           @metadata.to_json
         end
-      end
-      
-      def inspect
-        "Attachment:#{@metadata.inspect}"
       end
       
     end
