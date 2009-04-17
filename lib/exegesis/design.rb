@@ -21,7 +21,7 @@ module Exegesis
     end
     
     def self.compose_canonical
-      Dir[design_directory + 'views' + '**/*.js'].each do |view_func|
+      Dir[(design_directory + 'views' + '**/*.js').to_s].each do |view_func|
         path = view_func.split('/')
         func = path.pop.sub(/\.js$/,'')
         name = path.pop
