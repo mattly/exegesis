@@ -11,7 +11,7 @@ begin
     s.homepage = "http://github.com/mattly/exegesis"
     s.description = "A Document <> Object Mapper for CouchDB Documents"
     s.authors = ["Matt Lyon"]
-    s.add_dependency('rest-client', '>= 0.12.6')
+    s.add_dependency('rest-client', '>= 0.9')
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
