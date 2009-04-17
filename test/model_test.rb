@@ -126,13 +126,24 @@ class ExegesisModelTest < Test::Unit::TestCase
           context "writing times" do
             before do
               @obj = ExposeTestModel.new
-              @time = Time.now
-              @obj.time = @time
-              @obj.times = [@time, @time]
+              @time = Time.local(2009,4,16,20,14,26)
             end
-            expect { @obj.time.will == @time }
-            expect { @obj.times[0].will == @time }
-            expect { @obj.times[1].will == @time }
+            context "from a time object" do
+              before do
+                @obj.time = @time
+                @obj.times = [@time, @time]
+              end
+              expect { @obj.time.will == @time }
+              expect { @obj.times.will == [@time, @time] }
+            end
+            context "from a string" do
+              before do
+                @obj.time = @time.xmlschema
+                @obj.times = [@time.rfc2822, @time.getutc.strftime("%a, %d %b %Y %H:%M:%S GMT")]
+              end
+              expect { @obj.time.will == @time }
+              expect { @obj.times.map{|time| time.localtime }.will == [@time, @time] }
+            end
           end
         end
       

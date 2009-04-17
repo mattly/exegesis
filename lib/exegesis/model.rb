@@ -126,7 +126,7 @@ module Exegesis
       
       def cast as, value
         return nil if value.nil?
-        return value unless [String, Array, Hash, Fixnum, Float].include?(value.class)
+        return value unless [String, Hash, Fixnum, Float].include?(value.class)
         klass = if as == :given && value.is_a?(Hash)
           Exegesis.constantize(value['class'])
         elsif as.is_a?(Class)
