@@ -2,21 +2,66 @@
 
 Gem::Specification.new do |s|
   s.name = %q{exegesis}
-  s.version = "0.2.0"
+  s.version = "0.2.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Lyon"]
-  s.date = %q{2009-04-04}
+  s.date = %q{2009-04-16}
   s.description = %q{A Document <> Object Mapper for CouchDB Documents}
   s.email = %q{matt@flowerpowered.com}
-  s.extra_rdoc_files = ["README.rdoc", "LICENSE"]
-  s.files = ["README.rdoc", "VERSION.yml", "lib/exegesis", "lib/exegesis/database.rb", "lib/exegesis/design.rb", "lib/exegesis/document.rb", "lib/exegesis/model.rb", "lib/exegesis/server.rb", "lib/exegesis/utils", "lib/exegesis/utils/http.rb", "lib/exegesis.rb", "lib/monkeypatches", "lib/monkeypatches/time.rb", "test/database_test.rb", "test/design_test.rb", "test/document_test.rb", "test/fixtures", "test/fixtures/designs", "test/fixtures/designs/foos.js", "test/fixtures/designs/tags", "test/fixtures/designs/tags/views", "test/fixtures/designs/tags/views/by_tag", "test/fixtures/designs/tags/views/by_tag/map.js", "test/fixtures/designs/tags/views/by_tag/reduce.js", "test/http_test.rb", "test/model_test.rb", "test/server_test.rb", "test/test_helper.rb", "LICENSE"]
+  s.extra_rdoc_files = [
+    "LICENSE",
+    "README.rdoc"
+  ]
+  s.files = [
+    "LICENSE",
+    "README.rdoc",
+    "Rakefile",
+    "VERSION.yml",
+    "lib/exegesis.rb",
+    "lib/exegesis/database.rb",
+    "lib/exegesis/design.rb",
+    "lib/exegesis/document.rb",
+    "lib/exegesis/document/attachment.rb",
+    "lib/exegesis/document/attachments.rb",
+    "lib/exegesis/document/collection.rb",
+    "lib/exegesis/document/generic_document.rb",
+    "lib/exegesis/model.rb",
+    "lib/exegesis/server.rb",
+    "lib/exegesis/utils/http.rb",
+    "lib/monkeypatches/time.rb",
+    "test/attachments_test.rb",
+    "test/database_test.rb",
+    "test/design_test.rb",
+    "test/document_collection_test.rb",
+    "test/document_test.rb",
+    "test/fixtures/attachments/flavakitten.jpg",
+    "test/fixtures/designs/things/views/by_name/map.js",
+    "test/fixtures/designs/things/views/by_tag/map.js",
+    "test/fixtures/designs/things/views/by_tag/reduce.js",
+    "test/fixtures/designs/things/views/for_path/map.js",
+    "test/http_test.rb",
+    "test/model_test.rb",
+    "test/server_test.rb",
+    "test/test_helper.rb"
+  ]
   s.has_rdoc = true
   s.homepage = %q{http://github.com/mattly/exegesis}
-  s.rdoc_options = ["--inline-source", "--charset=UTF-8"]
+  s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.1}
   s.summary = %q{TODO}
+  s.test_files = [
+    "test/attachments_test.rb",
+    "test/database_test.rb",
+    "test/design_test.rb",
+    "test/document_collection_test.rb",
+    "test/document_test.rb",
+    "test/http_test.rb",
+    "test/model_test.rb",
+    "test/server_test.rb",
+    "test/test_helper.rb"
+  ]
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
