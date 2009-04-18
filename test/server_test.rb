@@ -1,8 +1,8 @@
 require File.join(File.dirname(__FILE__), 'test_helper.rb')
 
-class ExegesisServerTest < Test::Unit::TestCase
+describe Exegesis::Server do
 
-  before(:all) do
+  before do
     @db = 'http://localhost:5984/exegesis-test'
     RestClient.delete @db rescue nil
     RestClient.delete "#{@db}-2" rescue nil
@@ -11,16 +11,16 @@ class ExegesisServerTest < Test::Unit::TestCase
     @server = Exegesis::Server.new('http://localhost:5984')
   end
   
-  context "listing databases" do
-    expect { @server.databases.include?('exegesis-test').will == true }
+  describe "listing databases" do
+    expect { @server.databases.must_include('exegesis-test') }
   end
   
-  context "creating a database" do
+  describe "creating a database" do
     before do
       @response = @server.create_database('exegesis-test-2')
     end
     
-    expect { @response['ok'].will == true }
+    expect { assert @response['ok'] }
   end
   
 end

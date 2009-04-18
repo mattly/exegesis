@@ -28,51 +28,51 @@ class ExposeTestModel
   expose :other_doc, :other_docs, :as => :reference
 end
 
-class ExegesisModelTest < Test::Unit::TestCase
+describe Exegesis::Model do
   
-  context "class definitions" do
-    context "default objects" do
-      expect { WithDefaultTestModel.new['foo'].will == 'bar' }
-      expect { WithDefaultTestModel.new({'foo' => 'baz'})['foo'].will == 'baz' }
+  describe "class definitions" do
+    describe "default objects" do
+      expect { WithDefaultTestModel.new['foo'].must_equal 'bar' }
+      expect { WithDefaultTestModel.new({'foo' => 'baz'})['foo'].must_equal 'baz' }
     end
   
-    context "exposing keys" do
-      context "regular declarations" do
+    describe "exposing keys" do
+      describe "regular declarations" do
         before do 
           @obj = ExposeTestModel.new(:foo => 'bar', :bar => 'foo')
         end
-        context "reading" do
-          expect { @obj.foo.will == 'bar' }
-          expect { @obj.bar.will == 'foo' }
+        describe "reading" do
+          expect { @obj.foo.must_equal 'bar' }
+          expect { @obj.bar.must_equal 'foo' }
         end
       
-        context "writing" do
+        describe "writing" do
           before do
             @obj.bar = "bee"
           end
-          expect { @obj.bar.will == "bee" }
+          expect { @obj.bar.must_equal "bee" }
         end
       end
     
-      context "with a custom writer" do
-        context "when false" do
+      describe "with a custom writer" do
+        describe "when false" do
           before { @obj = ExposeTestModel.new(:read_only => 'value') }
-          expect { @obj.read_only.will == 'value' }
-          expect { lambda{@obj.read_only = "other value"}.will raise_error(NoMethodError) }
+          expect { @obj.read_only.must_equal 'value' }
+          expect { lambda{@obj.read_only = "other value"}.must_raise NoMethodError }
         end
       
-        context "when lambda" do
+        describe "when lambda" do
           before do
             @obj = ExposeTestModel.new(:custom_writer => 'value')
             @obj.custom_writer = 'other value'
             @expected = {'value' => 'other value'}
           end
-          expect { @obj.custom_writer.will == @expected }
+          expect { @obj.custom_writer.must_equal @expected }
         end
       end
     
-      context "when casting a value" do
-        context "when as given" do
+      describe "when casting a value" do
+        describe "when as given" do
           before do
             @obj = ExposeTestModel.new({
               :castee => {'foo' => 'foo', 'class' => 'FooTestModel'},
@@ -85,69 +85,69 @@ class ExegesisModelTest < Test::Unit::TestCase
             @obj.castees
           end
         
-          expect { @obj.castee.class.will == FooTestModel }
-          expect { @obj.castee['foo'].will == 'foo' }
-          expect { @obj.castee.parent.will == @obj }
+          expect { @obj.castee.must_be_kind_of FooTestModel }
+          expect { @obj.castee['foo'].must_equal 'foo' }
+          expect { @obj.castee.parent.must_equal @obj }
         
-          expect { @obj.castees.class.will == Array }
-          expect { @obj.castees[0].class.will == FooTestModel }
-          expect { @obj.castees[0]['foo'].will == 'foo' }
-          expect { @obj.castees[0].parent.will == @obj }
-          expect { @obj.castees[1].class.will == BarTestModel }
-          expect { @obj.castees[1]['foo'].will == 'bar' }
-          expect { @obj.castees[1].parent.will == @obj }
+          expect { @obj.castees.must_be_kind_of Array }
+          expect { @obj.castees[0].must_be_kind_of FooTestModel }
+          expect { @obj.castees[0]['foo'].must_equal 'foo' }
+          expect { @obj.castees[0].parent.must_equal @obj }
+          expect { @obj.castees[1].must_be_kind_of BarTestModel }
+          expect { @obj.castees[1]['foo'].must_equal 'bar' }
+          expect { @obj.castees[1].parent.must_equal @obj }
           
-          context "defining the writer" do
+          describe "defining the writer" do
             before do
               @obj = ExposeTestModel.new
               @foo = FooTestModel.new({'foo' => 'bar'})
               @obj.castee = @foo
             end
-            expect { @obj.castee.will == @foo }
+            expect { @obj.castee.must_equal @foo }
           end
         end
       
-        context "when as time" do
+        describe "when as time" do
           before do
             @obj = ExposeTestModel.new({:time => Time.now.to_json, :times => [Time.local(2009,3,1).to_json, Time.local(2009,2,1).to_json]})
             @obj.time
             @obj.times
           end
         
-          expect { @obj.time.class.will == Time }
-          expect { @obj.time.to_f.will be_close(Time.now.to_f, 1) }
+          expect { @obj.time.must_be_kind_of Time }
+          expect { @obj.time.to_f.must_be_close_to Time.now.to_f, 1 }
         
-          expect { @obj.times.class.will == Array }
-          expect { @obj.times[0].class.will == Time }
-          expect { @obj.times[0].will == Time.local(2009,3,1) }
-          expect { @obj.times[1].class.will == Time }
-          expect { @obj.times[1].will == Time.local(2009,2,1) }
+          expect { @obj.times.must_be_kind_of Array }
+          expect { @obj.times[0].must_be_kind_of Time }
+          expect { @obj.times[0].must_equal Time.local(2009,3,1) }
+          expect { @obj.times[1].must_be_kind_of Time }
+          expect { @obj.times[1].must_equal Time.local(2009,2,1) }
           
-          context "writing times" do
+          describe "writing times" do
             before do
               @obj = ExposeTestModel.new
               @time = Time.local(2009,4,16,20,14,26)
             end
-            context "from a time object" do
+            describe "from a time object" do
               before do
                 @obj.time = @time
                 @obj.times = [@time, @time]
               end
-              expect { @obj.time.will == @time }
-              expect { @obj.times.will == [@time, @time] }
+              expect { @obj.time.must_equal @time }
+              expect { @obj.times.must_equal [@time, @time] }
             end
-            context "from a string" do
+            describe "from a string" do
               before do
                 @obj.time = @time.xmlschema
                 @obj.times = [@time.rfc2822, @time.getutc.strftime("%a, %d %b %Y %H:%M:%S GMT")]
               end
-              expect { @obj.time.will == @time }
-              expect { @obj.times.map{|time| time.localtime }.will == [@time, @time] }
+              expect { @obj.time.must_equal @time }
+              expect { @obj.times.map{|time| time.localtime }.must_equal [@time, @time] }
             end
           end
         end
       
-        context "when as non document class" do
+        describe "when as non document class" do
           before do
             @obj = ExposeTestModel.new({
               :regex => 'foo',
@@ -157,24 +157,24 @@ class ExegesisModelTest < Test::Unit::TestCase
             @obj.regexen
           end
         
-          expect { @obj.regex.will == /foo/ }
+          expect { @obj.regex.must_equal /foo/ }
         
-          expect { @obj.regexen.class.will == Array }
-          expect { @obj.regexen[0].will == /foo/ }
-          expect { @obj.regexen[1].will == /bar/ }
+          expect { @obj.regexen.must_be_kind_of Array }
+          expect { @obj.regexen[0].must_equal /foo/ }
+          expect { @obj.regexen[1].must_equal /bar/ }
           
-          context "writing values from the class" do
+          describe "writing values from the class" do
             before do
               @obj = ExposeTestModel.new
               @regex = /foo/
               @obj.regex = @regex
             end
-            expect { @obj.regex.will == @regex }
+            expect { @obj.regex.must_equal @regex }
           end
         end
       
-        context "when as reference" do
-          context "with a database present" do
+        describe "when as reference" do
+          describe "with a database present" do
             before do
               reset_db
               @obj = ExposeTestModel.new(:other_doc => "other_doc", 
@@ -183,7 +183,7 @@ class ExegesisModelTest < Test::Unit::TestCase
               @obj.parent = @doc
             end
           
-            context "when the referenced document exists" do
+            describe "when the referenced document exists" do
               before do
                 [ {'class' => 'ModelTestDocument', '_id' => 'other_doc'},
                   {'class' => 'ModelTestDocument', '_id' => 'other_docs_1'}, 
@@ -191,15 +191,15 @@ class ExegesisModelTest < Test::Unit::TestCase
                 ].each {|doc| @db.put(doc.delete('_id'), doc) }
               end
             
-              expect { @obj.other_doc['_rev'].will == @db.get('other_doc')['_rev'] }
-              expect { @obj.other_doc.class.will == ModelTestDocument }
-              expect { @obj.other_docs.class.will == Array }
-              expect { @obj.other_docs[0]['_rev'].will == @db.get('other_docs_1')['_rev'] }
-              expect { @obj.other_docs[0].class.will == ModelTestDocument }
-              expect { @obj.other_docs[1]['_rev'].will == @db.get('other_docs_2')['_rev'] }
-              expect { @obj.other_docs[1].class.will == ModelTestDocument }
+              expect { @obj.other_doc['_rev'].must_equal @db.get('other_doc')['_rev'] }
+              expect { @obj.other_doc.must_be_kind_of ModelTestDocument }
+              expect { @obj.other_docs.must_be_kind_of Array }
+              expect { @obj.other_docs[0]['_rev'].must_equal @db.get('other_docs_1')['_rev'] }
+              expect { @obj.other_docs[0].must_be_kind_of ModelTestDocument }
+              expect { @obj.other_docs[1]['_rev'].must_equal @db.get('other_docs_2')['_rev'] }
+              expect { @obj.other_docs[1].must_be_kind_of ModelTestDocument }
             
-              context "caching" do
+              describe "caching" do
                 before do
                   @obj.other_doc # load it
                   doc = @db.get('other_doc')
@@ -207,32 +207,32 @@ class ExegesisModelTest < Test::Unit::TestCase
                   @db.put(doc['_id'], doc.attributes)
                 end
               
-                expect { @obj.other_doc['foo'].will be(nil) }
-                expect { @obj.other_doc(true)['foo'].will == 'updated' }
+                expect { @obj.other_doc['foo'].must_be_nil }
+                expect { @obj.other_doc(true)['foo'].must_equal 'updated' }
               end
             end
           
-            context "when the document is missing" do
-              expect { lambda{@obj.other_doc}.will raise_error(RestClient::ResourceNotFound) }
-              expect { lambda{@obj.other_docs}.will raise_error(RestClient::ResourceNotFound) }
+            describe "when the document is missing" do
+              expect { lambda{@obj.other_doc}.must_raise RestClient::ResourceNotFound }
+              expect { lambda{@obj.other_docs}.must_raise RestClient::ResourceNotFound }
             end
           
-            context "when the model has a parent" do
+            describe "when the model has a parent" do
               before do
                 @obj.castee = {'class' => 'FooTestModel', 'ref' => 'other_doc'}
                 @db.put('other_doc', {'class' => 'ModelTestDocument', '_id' => 'other_doc'})
               end
             
-              expect { @obj.castee.ref['_rev'].will == @db.get('other_doc')['_rev'] }
+              expect { @obj.castee.ref['_rev'].must_equal @db.get('other_doc')['_rev'] }
             end
           end
         
-          context "without any database present" do
+          describe "without any database present" do
             before { @obj = ExposeTestModel.new(:other_doc => "some_doc_id") }
-            expect { lambda{@obj.other_doc}.will raise_error(ArgumentError) }
+            expect { lambda{@obj.other_doc}.must_raise ArgumentError }
           end
           
-          context "setting references" do
+          describe "setting references" do
             before do
               reset_db
               @parent = ModelTestDocument.new({}, @db)
@@ -241,59 +241,59 @@ class ExegesisModelTest < Test::Unit::TestCase
               @doc = ModelTestDocument.new({}, @db)
               @doc.save
             end
-            context "from a doc that has been saved" do
+            describe "from a doc that has been saved" do
               before do
                 @obj.other_doc = @doc
               end
-              expect { @obj['other_doc'].will == @doc.id }
-              expect { @obj.other_doc.will == @doc }
+              expect { @obj['other_doc'].must_equal @doc.id }
+              expect { @obj.other_doc.must_equal @doc }
             end
-            context "from an id" do
+            describe "from an id" do
               before do
                 @obj.other_doc = @doc.id
               end
-              expect { @obj['other_doc'].will == @doc.id }
-              expect { @obj.other_doc.will == @doc }
+              expect { @obj['other_doc'].must_equal @doc.id }
+              expect { @obj.other_doc.must_equal @doc }
             end
           end
         end
       
-        context "when the value is nil" do
+        describe "when the value is nil" do
           before do
             @obj =  ExposeTestModel.new({:castee => nil, :castees => nil, :regexen => ['foo', nil]})
           end
-          expect { @obj.castee.will be(nil) }
-          expect { @obj.castees.will be(nil) }
-          expect { @obj.regexen.will == [/foo/] }
+          expect { @obj.castee.must_be_nil }
+          expect { @obj.castees.must_be_nil }
+          expect { @obj.regexen.must_equal [/foo/] }
         end
         
       end
     end
   end
   
-  context "instance methods" do
+  describe "instance methods" do
     before do
       @obj = ExposeTestModel.new({:read_only => 'bar'})
     end
-    context "update" do
+    describe "update" do
       before do
         @obj.update({:read_only => 'bee'})
       end
       
-      expect { @obj.read_only.will == 'bee' } 
+      expect { @obj.read_only.must_equal 'bee' } 
     end
     
-    context "update" do
-      context "with a writer" do
+    describe "update" do
+      describe "with a writer" do
         before do
           @obj.update_attributes(:foo => 'foo')
         end
         
-        expect { @obj.foo.will == "foo" }
+        expect { @obj.foo.must_equal "foo" }
       end
       
-      context "without a writer" do
-        expect { lambda{@obj.update_attributes({:read_only => 'bee'})}.will raise_error(NoMethodError) }
+      describe "without a writer" do
+        expect { lambda{@obj.update_attributes({:read_only => 'bee'})}.must_raise NoMethodError }
       end
     end
   end

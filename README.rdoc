@@ -51,13 +51,18 @@ CouchDB is table-less, and Exegesis's design reflects this. In CouchDB, Document
 
 == Requirements:
 
-* RestClient
+* RestClient 0.9 or later.
 
 For running the tests:
 
-* Test::Unit (you got it)
-* Context (http://github.com/jeremymcanally/context, can install from github gems)
-* Matchy (http://github.com/jeremymcanally/matchy, github gem version out of date; clone, build & install for now)
-* Zebra (http://github.com/giraffesoft/zerba, depends on jeremymcanally-matchy, which is out of date; clone, build & install for now)
+* MiniTest
+  MiniTest is the default testing framework for Ruby 1.9
+  However, these tests require the trunk version, and my patches against the trunk version.
+  The trunk version is here: http://github.com/seattlerb/minitest
+  My patches are in my fork: http://github.com/mattly/minitest
+  You will need to clone my repo and from its directory, do the following:
+    `rake gem`
+    `sudo gem install pkg/minitest-1.3.1`
+  Once MiniTest 1.3.2 is released you should be able to use the standard gem.
 
-The test suite creates and destroys a database for each test that requires access to the database. This is slow, and the test suite may take some time to run. However, I would rather the test suite be slow and accurate than quick and full of mocking.
+The test suite creates and destroys a database for each test that requires access to the database. This is slow, and the test suite may take some time to run. However, I would rather the test suite be slow and accurate than quick and full of mocking or possibly error-prone deleting.

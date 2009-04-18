@@ -4,9 +4,9 @@ class DocCollectionTestDoc
   include Exegesis::Document
 end
 
-class ExegesisDocumentCollectionTest < Test::Unit::TestCase
+describe Exegesis::DocumentCollection do
   
-  context "when dealing with view response rows" do
+  describe "when dealing with view response rows" do
     before do
       reset_db
       @docs = [{'_id' => 'foo'}, {'_id' => 'bar'}, {'_id' => 'bee'}].map {|d| d.update('class' => 'DocCollectionTestDoc') }
@@ -16,14 +16,14 @@ class ExegesisDocumentCollectionTest < Test::Unit::TestCase
       @collection = Exegesis::DocumentCollection.new(@response_rows, @db)
     end
     
-    expect { @collection.size.will == @rows.size }
-    expect { @collection.keys.will == @rows.map{|r| r.first}.uniq }
-    expect { @collection.values.will == @rows.map{|r| r[1]} }
-    expect { @collection.documents.size.will == @rows.map{|r| r[2]}.uniq.size }
-    expect { @collection.documents.all? {|id,d| d.kind_of?(DocCollectionTestDoc) }.will == true }
-    expect { @collection.documents['foo'].id.will == @docs.first['_id'] }
+    expect { @collection.size.must_equal @rows.size }
+    expect { @collection.keys.must_equal @rows.map{|r| r.first}.uniq }
+    expect { @collection.values.must_equal @rows.map{|r| r[1]} }
+    expect { @collection.documents.size.must_equal @rows.map{|r| r[2]}.uniq.size }
+    expect { @collection.documents.each {|id,d| d.must_be_kind_of DocCollectionTestDoc } }
+    expect { @collection.documents['foo'].id.must_equal @docs.first['_id'] }
     
-    context "when documents are already in the rows" do
+    describe "when documents are already in the rows" do
       before do
         # "thing":"foobar" is not in the docs that have been saved to the database
         @docs.each {|d| d.update('thing' => 'foobar') }
@@ -31,22 +31,22 @@ class ExegesisDocumentCollectionTest < Test::Unit::TestCase
         @collection = Exegesis::DocumentCollection.new(@response_rows, @db)
       end
       
-      expect { @collection.documents.all?{|id,d| d['thing'] == 'foobar' }.will == true }
+      expect { @collection.documents.each {|id,d| d['thing'].must_equal 'foobar' } }
     end
     
-    context "filtering to a specific key" do
+    describe "filtering to a specific key" do
       before do
         @rows = @rows.select {|r| r[0]=="foo" }
         @foos = @collection['foo']
       end
       
-      expect { @foos.size.will == @rows.size }
-      expect { @foos.values.will == @rows.map{|r| r[1]} }
-      expect { @foos.documents.size.will == @rows.map{|r| r[2]}.uniq.size }
-      expect { @foos.documents.all? {|id,d| d.kind_of?(DocCollectionTestDoc) }.will == true }
-      expect { @foos.documents['foo'].object_id.will == @collection.documents['foo'].object_id }
+      expect { @foos.size.must_equal @rows.size }
+      expect { @foos.values.must_equal @rows.map{|r| r[1]} }
+      expect { @foos.documents.size.must_equal @rows.map{|r| r[2]}.uniq.size }
+      expect { @foos.documents.each {|id,d| d.must_be_kind_of DocCollectionTestDoc } }
+      expect { @foos.documents['foo'].object_id.must_equal @collection.documents['foo'].object_id }
       
-      context "with array keys" do
+      describe "with array keys" do
         before do
           @rows = [ [%w(bar baz), 5, 'bar'], 
                     [%w(bar bee), 5, 'bee'], 
@@ -60,17 +60,17 @@ class ExegesisDocumentCollectionTest < Test::Unit::TestCase
           @collection = Exegesis::DocumentCollection.new(@response_rows, @db)
         end
 
-        expect { @collection['foo'].size.will == @rows.select{|r| r[0][0]=='foo'}.size }
-        expect { @collection['foo'].values.will == @rows.select{|r| r[0][0]=='foo' }.map{|r| r[1]} }
-        expect { @collection['foo']['bar'].size.will == @rows.select{|r| r[0][0]=='foo' && r[0][1]=='bar'}.size }
-        expect { @collection['foo']['bar'].values.will == @rows.select{|r| r[0][0]=='foo'&&r[0][1]=='bar'}.map{|r| r[1]} }
+        expect { @collection['foo'].size.must_equal @rows.select{|r| r[0][0]=='foo'}.size }
+        expect { @collection['foo'].values.must_equal @rows.select{|r| r[0][0]=='foo' }.map{|r| r[1]} }
+        expect { @collection['foo']['bar'].size.must_equal @rows.select{|r| r[0][0]=='foo' && r[0][1]=='bar'}.size }
+        expect { @collection['foo']['bar'].values.must_equal @rows.select{|r| r[0][0]=='foo'&&r[0][1]=='bar'}.map{|r| r[1]} }
       end
 
     end
     
   end
   
-  context "iterating" do
+  describe "iterating" do
     before do
       reset_db
       @docs = [%w(bar bee), %w(bee foo), %w(foo bar)].map {|k,t| {'_id'=>k, 'thing'=>t, 'class'=>'DocCollectionTestDoc'} }
@@ -79,7 +79,7 @@ class ExegesisDocumentCollectionTest < Test::Unit::TestCase
       @collection = Exegesis::DocumentCollection.new(@rows, @db)
     end
     
-    context "each" do
+    describe "each" do
       before do
         @counter = 0
         @bin = []
@@ -88,10 +88,10 @@ class ExegesisDocumentCollectionTest < Test::Unit::TestCase
         @valbinning = lambda{ @collection.each{|k,v,d| @bin << v }; @bin }
         @docbinning = lambda{ @collection.each{|k,v,d| @bin << d.id }; @bin }
       end
-      expect { @counting.call.will == 3 }
-      expect { @keybinning.call.will == @rows.map{|r| r['key']} }
-      expect { @valbinning.call.will == @rows.map{|r| r['value']} }
-      expect { @docbinning.call.will == @rows.map{|r| @db.get(r['id']).id} }
+      expect { @counting.call.must_equal 3 }
+      expect { @keybinning.call.must_equal @rows.map{|r| r['key']} }
+      expect { @valbinning.call.must_equal @rows.map{|r| r['value']} }
+      expect { @docbinning.call.must_equal @rows.map{|r| @db.get(r['id']).id} }
     end
   end
 end

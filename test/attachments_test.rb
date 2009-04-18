@@ -4,18 +4,18 @@ class AttachmentsDocumentTest
   include Exegesis::Document
 end
 
-class ExegesisAttachmentsTest < Test::Unit::TestCase
+describe Exegesis::Document::Attachments do
   before do
     reset_db
     @doc = AttachmentsDocumentTest.new({}, @db)
   end
   
-  context "document methods" do
-    expect { @doc.attachments.kind_of?(Exegesis::Document::Attachments).will == true }
-    expect { @doc.attachments.size.will == 0 }
+  describe "document methods" do
+    expect { @doc.attachments.must_be_kind_of Exegesis::Document::Attachments }
+    expect { @doc.attachments.size.must_equal 0 }
   end
   
-  context "reading existing attachments" do
+  describe "reading existing attachments" do
     before do
       @doc.save
       @text = "this is a file"
@@ -23,20 +23,20 @@ class ExegesisAttachmentsTest < Test::Unit::TestCase
       @doc = @db.get(@doc['_id'])
     end
     
-    expect { @doc.attachments.size.will == 1 }
-    expect { @doc.attachments.keys.will == %w(file.txt) }
-    expect { @doc.attachments['file.txt'].content_type.will == 'text/plain' }
-    expect { @doc.attachments['file.txt'].length.will == @text.length }
-    expect { @doc.attachments['file.txt'].stub?.will == true }
-    expect { @doc.attachments['file.txt'].file.will == @text }
+    expect { @doc.attachments.size.must_equal 1 }
+    expect { @doc.attachments.keys.must_equal %w(file.txt) }
+    expect { @doc.attachments['file.txt'].content_type.must_equal 'text/plain' }
+    expect { @doc.attachments['file.txt'].length.must_equal @text.length }
+    expect { assert @doc.attachments['file.txt'].stub? }
+    expect { @doc.attachments['file.txt'].file.must_equal @text }
   end
   
-  context "writing attachments" do
+  describe "writing attachments" do
     before do
       @doc.save
     end
-    context "directly using attachments put" do
-      context "with the file's contents as a string" do
+    describe "directly using attachments put" do
+      describe "with the file's contents as a string" do
         before do
           @contents = "this is the contents of a text file"
           @type = 'text/plain'
@@ -44,62 +44,62 @@ class ExegesisAttachmentsTest < Test::Unit::TestCase
           @putting.call 'f.txt', @contents, @type
         end
 
-        context "when they don't exist yet" do
-          expect { RestClient.get("#{@doc.uri}/f.txt").will == @contents }
-          expect { @doc.attachments['f.txt'].file.will == @contents }
-          expect { @doc.rev.will == @db.raw_get(@doc.id)['_rev'] }
+        describe "when they don't exist yet" do
+          expect { RestClient.get("#{@doc.uri}/f.txt").must_equal @contents }
+          expect { @doc.attachments['f.txt'].file.must_equal @contents }
+          expect { @doc.rev.must_equal @db.raw_get(@doc.id)['_rev'] }
         end
       
-        context "when they do exist" do
+        describe "when they do exist" do
           before do
             @putting.call 'f.txt', "foo", @type
           end
-          expect { @doc.attachments['f.txt'].file.will == "foo" }
+          expect { @doc.attachments['f.txt'].file.must_equal "foo" }
         end
       end
       
       # it turns out rest-client doesn't actually support streaming uploads/downloads yet
-      # context "streaming the file as a block given" do
+      # describe "streaming the file as a block given" do
       #   before do
       #     @file = File.open(fixtures_path('attachments/flavakitten.jpg'))
       #     @type = 'image/jpeg'
       #     @doc.attachments.put('kitten.jpg', @type) { @file.read }
       #   end
       #   
-      #   expect { @doc.will satisfy(lambda{|e| e.attachments['kitten.jpg'].file == @file.read })}
+      #   expect { lambda{|e| e.attachments['kitten.jpg'].file == @file.read }.must_be true }
       # end
     end
     
-    context "indirectly, saved with the document" do
+    describe "indirectly, saved with the document" do
       before do
         @content = "this is an example file"
         @doc.attachments['file.txt'] = @content, 'text/plain'
       end
       
-      expect { @doc.attachments['file.txt'].content_type.will == 'text/plain' }
-      expect { @doc.attachments['file.txt'].metadata['data'].will == Base64.encode64(@content).gsub(/\s/,'') }
-      expect { @doc.attachments['file.txt'].length.will == @content.length }
-      expect { @doc.attachments.dirty?.will == true }
+      expect { @doc.attachments['file.txt'].content_type.must_equal 'text/plain' }
+      expect { @doc.attachments['file.txt'].metadata['data'].must_equal Base64.encode64(@content).strip }
+      expect { @doc.attachments['file.txt'].length.must_equal @content.length }
+      expect { assert @doc.attachments.dirty? }
       
-      context "when saving" do
+      describe "when saving" do
         before do
           @doc.save
         end
         
-        expect { @doc.attachments['file.txt'].file.will == @content }
-        expect { @doc.attachments['file.txt'].stub?.will == true }
-        expect { @doc.attachments['file.txt'].metadata.has_key?('data').will == false }
-        expect { @doc.attachments.dirty?.will == false }
+        expect { @doc.attachments['file.txt'].file.must_equal @content }
+        expect { assert @doc.attachments['file.txt'].stub? }
+        expect { refute @doc.attachments['file.txt'].metadata.has_key?('data') }
+        expect { refute @doc.attachments.dirty? }
       end
     end
   end
   
-  context "removing attachments" do
-    context "from the document" do
+  describe "removing attachments" do
+    describe "from the document" do
       
     end
     
-    context "directly from the database" do
+    describe "directly from the database" do
       
     end
   end
