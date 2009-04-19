@@ -1,6 +1,8 @@
 module Exegesis
   module Model
     
+    JSON_PRIMITIVES = [Array, String, Hash, Fixnum, Float]
+    
     def self.included base
       base.extend ClassMethods
       base.send :include, InstanceMethods
@@ -23,6 +25,7 @@ module Exegesis
             define_reference_writer attrib unless opts[:writer] == false
           elsif opts[:as]
             define_caster attrib, opts[:as]
+            define_caster_writer attrib, opts[:as] unless opts[:writer] == false
           else
             define_method(attrib) { @attributes[attrib] }
           end
@@ -79,7 +82,20 @@ module Exegesis
           end
         end
       end
-
+      
+      def define_caster_writer attrib, as
+        define_writer(attrib) do |val|
+          @attributes[attrib] = if JSON_PRIMITIVES.include?(val.class)
+            if val.is_a?(Array)
+              val.map {|v| cast(as, v) }
+            else
+              cast(as, val)
+            end
+          else
+            val
+          end
+        end
+      end
     end
     
     module InstanceMethods
@@ -126,7 +142,7 @@ module Exegesis
       
       def cast as, value
         return nil if value.nil?
-        return value unless [String, Hash, Fixnum, Float].include?(value.class)
+        return value unless JSON_PRIMITIVES.include?(value.class)
         klass = if as == :given && value.is_a?(Hash)
           Exegesis.constantize(value['class'])
         elsif as.is_a?(Class)

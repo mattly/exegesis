@@ -143,6 +143,8 @@ describe Exegesis::Model do
               end
               expect { @obj.time.must_equal @time }
               expect { @obj.times.map{|time| time.localtime }.must_equal [@time, @time] }
+              expect { @obj['time'].must_equal @time }
+              expect { @obj['times'].must_equal [@time, @time] }
             end
           end
         end
