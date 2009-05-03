@@ -36,10 +36,10 @@ module Exegesis
       # else retrieves the default
       def default hash=nil
         if hash
-          @default = {}
+          @default || default
           hash.each {|key, value| @default[key.to_s] = value }
         else
-          @default ||= {}
+          @default ||= superclass.respond_to?(:default) ? superclass.default.dup : {}
         end
       end
       
@@ -154,7 +154,7 @@ module Exegesis
         casted = if klass.nil?
           value # if no class, just return the value
         elsif klass == Time # Time is a special case; the ONLY special case.
-          Time.parse value
+          value.empty? ? nil : Time.parse(value)
         else
           klass.new value
         end

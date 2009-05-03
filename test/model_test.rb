@@ -146,6 +146,16 @@ describe Exegesis::Model do
               expect { @obj['time'].must_equal @time }
               expect { @obj['times'].must_equal [@time, @time] }
             end
+            describe "from a blank string" do
+              before do
+                @obj.time = ''
+                @obj.times = ['', '']
+              end
+              expect { @obj.time.must_be_nil }
+              expect { @obj.times.map{|t| t }.must_equal [] }
+              expect { @obj['time'].must_be_nil }
+              expect { @obj['times'].must_equal [nil, nil] }
+            end
           end
         end
       
