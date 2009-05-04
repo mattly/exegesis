@@ -295,7 +295,7 @@ describe Exegesis::Model do
       expect { @obj.read_only.must_equal 'bee' } 
     end
     
-    describe "update" do
+    describe "update_attributes" do
       describe "with a writer" do
         before do
           @obj.update_attributes(:foo => 'foo')
@@ -306,6 +306,14 @@ describe Exegesis::Model do
       
       describe "without a writer" do
         expect { lambda{@obj.update_attributes({:read_only => 'bee'})}.must_raise NoMethodError }
+      end
+      
+      describe "with a 'class' key" do
+        before do
+          @obj.update_attributes('class' => 'Foo')
+        end
+        
+        expect { @obj['class'].must_equal 'ExposeTestModel' }
       end
     end
   end

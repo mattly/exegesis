@@ -113,6 +113,7 @@ module Exegesis
       # update the attributes in the model using writers. If no writer is defined for a given
       # key it will raise NoMethodError
       def update_attributes hash={}
+        hash.delete('class')
         hash.each do |key, value| 
           self.send("#{key}=", value)
         end
