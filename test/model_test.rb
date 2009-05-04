@@ -308,7 +308,7 @@ describe Exegesis::Model do
         expect { lambda{@obj.update_attributes({:read_only => 'bee'})}.must_raise NoMethodError }
       end
       
-      describe "with a 'class' key" do
+      describe "filtering reserved keys" do
         before do
           @obj.update_attributes('class' => 'Foo')
         end

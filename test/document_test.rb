@@ -122,7 +122,7 @@ describe Exegesis::Document do
     end
 
     describe "updating attributes" do
-    
+      
       describe "an existing doc" do
         before do
           @doc = TestDocument.new({'foo' => 'bar'}, @db)
@@ -169,6 +169,17 @@ describe Exegesis::Document do
           before { @action = lambda{@doc.update_attributes({'foo'=>'baz', '_rev'=>'1-3034523523'})} }
           expect { @action.must_raise ArgumentError }
         end
+      end
+      
+      describe "with attachments" do
+        before do
+          @doc = TestDocument.new({}, @db)
+          @doc.update_attributes({'_attachments' => 
+            {'file.txt' => {'content_type' => 'text/plain', 'stub' => true}}
+          })
+        end
+        
+        expect {@doc.attachments['file.txt'].must_be_instance_of(Exegesis::Document::Attachment) }
       end
       
     end

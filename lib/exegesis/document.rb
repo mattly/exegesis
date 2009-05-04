@@ -86,6 +86,10 @@ module Exegesis
         @attachments ||= Exegesis::Document::Attachments.new(self)
       end
       
+      def _attachments= val
+        @attributes['_attachments'] = val
+      end
+      
       def to_json
         @attributes.merge({'_attachments' => @attachments}).to_json
       end
