@@ -6,7 +6,7 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
     s.name = "exegesis"
-    s.summary = "TODO"
+    s.summary = "A Document <> Object Mapper for CouchDB Documents"
     s.email = "matt@flowerpowered.com"
     s.homepage = "http://github.com/mattly/exegesis"
     s.description = "A Document <> Object Mapper for CouchDB Documents"
