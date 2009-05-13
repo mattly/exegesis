@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{exegesis}
-  s.version = "0.2.5"
+  s.version = "0.2.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Lyon"]
-  s.date = %q{2009-05-03}
+  s.date = %q{2009-05-12}
   s.description = %q{A Document <> Object Mapper for CouchDB Documents}
   s.email = %q{matt@flowerpowered.com}
   s.extra_rdoc_files = [

@@ -19,8 +19,8 @@ module Exegesis
           @attributes['updated_at'] = Time.now
           @attributes['created_at'] ||= Time.now
         end
-        expose 'updated_at', :as => Time, :writer => false
-        expose 'created_at', :as => Time, :writer => false
+        expose 'updated_at', :as => Time
+        expose 'created_at', :as => Time
       end
     
       def unique_id meth=nil, &block
