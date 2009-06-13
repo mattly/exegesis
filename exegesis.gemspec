@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{exegesis}
-  s.version = "0.2.6"
+  s.version = "0.2.8"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Lyon"]
-  s.date = %q{2009-05-12}
+  s.date = %q{2009-06-12}
   s.description = %q{A Document <> Object Mapper for CouchDB Documents}
   s.email = %q{matt@flowerpowered.com}
   s.extra_rdoc_files = [
@@ -20,6 +20,10 @@ Gem::Specification.new do |s|
     "VERSION.yml",
     "lib/exegesis.rb",
     "lib/exegesis/database.rb",
+    "lib/exegesis/database/designs.rb",
+    "lib/exegesis/database/documents.rb",
+    "lib/exegesis/database/rest.rb",
+    "lib/exegesis/database/singleton.rb",
     "lib/exegesis/design.rb",
     "lib/exegesis/document.rb",
     "lib/exegesis/document/attachment.rb",
@@ -31,6 +35,8 @@ Gem::Specification.new do |s|
     "lib/exegesis/utils/http.rb",
     "lib/monkeypatches/time.rb",
     "test/attachments_test.rb",
+    "test/database/documents_test.rb",
+    "test/database/singleton_test.rb",
     "test/database_test.rb",
     "test/design_test.rb",
     "test/document_collection_test.rb",
@@ -54,6 +60,8 @@ Gem::Specification.new do |s|
   s.summary = %q{A Document <> Object Mapper for CouchDB Documents}
   s.test_files = [
     "test/attachments_test.rb",
+    "test/database/documents_test.rb",
+    "test/database/singleton_test.rb",
     "test/database_test.rb",
     "test/design_test.rb",
     "test/document_collection_test.rb",
