@@ -17,7 +17,9 @@ module Exegesis
       def database(db=nil)
         if db 
           if db.is_a?(Exegesis::Database::Singleton) || db.is_a?(Exegesis::Database)
-          @database = db
+            @database = db
+          else
+            raise ArgumentError, "please supply either an Exegesis::Database or Exegesis::Database::Singleton"
           end
         else
           @database
@@ -47,7 +49,7 @@ module Exegesis
     module InstanceMethods
       def initialize hash={}, db=nil
         super hash
-        @database = db
+        @database = db || self.class.database
       end
       
       def uri

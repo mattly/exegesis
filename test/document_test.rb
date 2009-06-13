@@ -36,7 +36,14 @@ describe Exegesis::Document do
   
   describe "class definitions" do
     describe "with database declarations" do
+      before do
+        @doc = SingletonDatabaseDocument.new
+      end
+      
       expect { SingletonDatabaseDocument.database.must_equal DocumentSingletonDatabaseTest }
+      expect { @doc.database.must_equal DocumentSingletonDatabaseTest }
+      
+      expect { lambda{SingletonDatabaseDocument.database("foo")}.must_raise(ArgumentError) }
     end
     
     describe "with timestamps" do
