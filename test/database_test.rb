@@ -3,20 +3,12 @@ require File.join(File.dirname(__FILE__), 'test_helper.rb')
 class DatabaseTest
   include Exegesis::Database
 end
+
 class CustomDesignDirDatabaseTest
   include Exegesis::Database
   designs_directory 'app/designs'
 end
-class NamedDocumentDatabaseTest
-  include Exegesis::Database
-  named_document :settings do
-    expose :things
-  end
-end
-class NamedDocumentWithoutBlockDatabaseTest
-  include Exegesis::Database
-  named_document :blah
-end
+
 class DatabaseTestDocument
   include Exegesis::Document
 end
@@ -177,42 +169,6 @@ describe Exegesis::Database do
   describe "setting the designs directory" do
     expect { DatabaseTest.designs_directory.must_equal Pathname.new('designs') }
     expect { CustomDesignDirDatabaseTest.designs_directory.must_equal Pathname.new('app/designs') }
-  end
-  
-  describe "with a named document" do
-    describe "that doesn't exist yet" do
-      before do
-        reset_db
-        @db = NamedDocumentDatabaseTest.new('exegesis-test')
-        @db.settings
-      end
-      
-      expect { @db.settings.must_be_kind_of NamedDocumentDatabaseTest::Settings }
-      expect { @db.settings.rev.must_match /1-\d{7,12}/ }
-      expect { @db.settings.must_respond_to :things }
-      expect { @db.get('settings').must_be_kind_of NamedDocumentDatabaseTest::Settings }
-    end
-    
-    describe "that does exist" do
-      before do
-        reset_db
-        @db = NamedDocumentDatabaseTest.new('exegesis-test')
-        @doc = @db.save({'_id' => 'settings', 'things' => %w(foo bar baz), 'class' => 'NamedDocumentDatabaseTest::Settings'})
-      end
-      
-      expect { @db.settings.rev.must_equal @doc['_rev'] }
-      expect { @db.settings.rev.must_match /1-\d{7,12}/ }
-      expect { @db.settings.things.must_equal %w(foo bar baz) }
-    end
-    
-    describe "when the declaration does not have a block" do
-      before do
-        reset_db
-        @db = NamedDocumentWithoutBlockDatabaseTest.new('exegesis-test')
-      end
-      
-      expect { @db.blah.must_be_kind_of NamedDocumentWithoutBlockDatabaseTest::Blah }
-    end
   end
   
 end
