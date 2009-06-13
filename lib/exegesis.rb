@@ -22,10 +22,6 @@ module Exegesis
     
   extend self
   
-  def model_classes
-    @model_classes ||= {}
-  end
-  
   # extracted from Extlib
   #
   # Constantize tries to find a declared constant with the name specified
@@ -42,6 +38,11 @@ module Exegesis
     end
 
     Object.module_eval("::#{$1}", __FILE__, __LINE__)
+  end
+  
+  # turns class/module names into valid database names
+  def nameify(name)
+    name.gsub(/([a-z])([A-Z])/) { "#{$1}_#{$2.downcase}"}.gsub(/[A-Z]/) {|m| m.downcase }.gsub(/::/,'/')
   end
   
   def instantiate(doc, database)
