@@ -23,9 +23,22 @@ class UniqueIdBlockTestDocument
   unique_id {|doc, attempt| attempt.zero? ? doc['pk'] : "#{doc['pk']}-#{attempt}" }
 end
 
+module DocumentSingletonDatabaseTest
+  extend self
+  extend Exegesis::Database::Singleton
+end
+class SingletonDatabaseDocument
+  include Exegesis::Document
+  database DocumentSingletonDatabaseTest
+end
+
 describe Exegesis::Document do
   
   describe "class definitions" do
+    describe "with database declarations" do
+      expect { SingletonDatabaseDocument.database.must_equal DocumentSingletonDatabaseTest }
+    end
+    
     describe "with timestamps" do
       before do
         reset_db

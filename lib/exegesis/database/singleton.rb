@@ -22,8 +22,9 @@ module Exegesis
           rescue RestClient::ResourceNotFound
             @server.put @uri
           end
-        else
           @uri
+        else
+          @uri || uri(Exegesis.nameify(name))
         end
       end
     

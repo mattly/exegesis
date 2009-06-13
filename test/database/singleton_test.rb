@@ -16,12 +16,19 @@ module SingletonDbTest
   document :named_doc
 end
 
+module SingletonDbDefaultUriTest
+  extend self
+  extend Exegesis::Database::Singleton
+end
+
 describe Exegesis::Database::Singleton do
   
   describe "database setup" do
     expect { SingletonDbTest.uri.must_equal SingletonDbTest::URI }
     expect { Exegesis::Http.get(SingletonDbTest::URI)["db_name"].must_equal SingletonDbTest::DB }
     expect { lambda{SingletonDbTest.uri('foo.db')}.must_raise ArgumentError }
+    
+    expect { SingletonDbDefaultUriTest.uri.must_equal "http://localhost:5984/singleton_db_default_uri_test" }
   end
   
   describe "database REST methods" do

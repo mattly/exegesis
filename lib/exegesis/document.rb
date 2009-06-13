@@ -14,6 +14,16 @@ module Exegesis
     end
 
     module ClassMethods
+      def database(db=nil)
+        if db 
+          if db.is_a?(Exegesis::Database::Singleton) || db.is_a?(Exegesis::Database)
+          @database = db
+          end
+        else
+          @database
+        end
+      end
+      
       def timestamps!
         define_method :set_timestamps do
           @attributes['updated_at'] = Time.now
